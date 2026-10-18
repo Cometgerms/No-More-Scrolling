@@ -2058,3 +2058,11 @@ main {
 :root[data-theme="light"] .dark-icon {
   display: none;
 }
+/* Account controls use the same touch spacing as profile settings. */
+.account-panel { margin: 24px 0; }
+.account-panel form { display: grid; gap: 12px; margin-top: 20px; }
+.account-panel button { min-height: 44px; }
+.account-email { overflow-wrap: anywhere; }
+.account-import, .note-conflict { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.note-conflict pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto; font: inherit; }
+.account-panel [role="alert"] { color: #d66e58; }

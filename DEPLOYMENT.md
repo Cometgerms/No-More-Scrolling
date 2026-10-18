@@ -29,20 +29,46 @@ The browser sends the key to the configured endpoint in the Authorization header
 
 The chat shows and previews the current page excerpt. Reading sections and public lab text update with the page; selected world reports include their source URLs. Notes, collection data and settings fields are not automatically included. Turning off context removes the current page from subsequent requests; previously sent content is still part of the active conversation until New chat. Chats are memory-only, bounded to the most recent 12 messages per request, with a 60-second timeout and Stop button. Answers support `\(...\)` and `\[...\]` math. The assistant has no search tool and must not claim live verification.
 
-## Google / email accounts — next stage
+## Email and password accounts
 
-`src/auth.ts` defines the provider contract for Google sign-in, email codes, sessions, sign-out and session-change events. It is a boundary, **not an implemented authentication backend**. There are intentionally no pretend working login buttons.
+Supabase Auth and cloud synchronization are implemented with the pinned official client. The live project is `no-more-scrolling` (`lanrrewsskfqylinmsag`, US East). Only its publishable key is included in the frontend. The deployed database has `reading_states`, ownership RLS and a revision-checked, security-invoker save function; `supabase/schema.sql` records the schema for a fresh project (do not reapply it to the provisioned project).
 
-After deployment:
+### Owner configuration
 
-1. Supabase project `no-more-scrolling` (`lanrrewsskfqylinmsag`, US East) was created on 2026-10-18 in Cometgerms's Org. Configure the exact production site URL and localhost redirect allowlist next.
-2. Enable Google provider and configure its OAuth client/secret in Supabase (never in this repository). Enable email OTP and production email delivery.
-3. Implement the `AuthGateway` with the official Supabase client, including callback processing, session refresh, logout and error states.
-4. Add per-user data tables and Row Level Security policies; only the owning user may read/write their records. No service-role key in the browser.
-5. Implement explicit first-login migration from this device, synchronization/conflict rules and offline replay. Signing in alone does not synchronize the existing local state.
-6. Test email expiry/resend, Google return URL, two devices, offline edits, revoked sessions and account separation before promising durable cross-device retention.
+1. In Supabase Authentication → URL Configuration, set Site URL and an allowed redirect URL to `https://cometgerms.github.io/No-More-Scrolling/`. For local testing, also allow `http://localhost:5174/No-More-Scrolling/` and `http://localhost:4173/No-More-Scrolling/`.
+2. Keep Email authentication enabled in Supabase. No Google Cloud project, OAuth client or Google provider is required. The application exposes only email/password sign-in.
+3. Keep signup confirmation enabled. In Email Templates, Confirm Signup and Reset Password should retain links using `{{ .ConfirmationURL }}`. The old Magic Link OTP customization is no longer used.
+4. Registration sends a confirmation email; the UI also supports resending it. After confirmation, sign in with email/password. Forgot password sends a recovery link; open it in the same browser where requested (PKCE), then set a new password in My → Account and sync. Safari and installed PWA can have separate storage: initiate recovery in Safari if email links open there, then use the new password in the PWA.
+5. Default Supabase email delivery is restricted to project organization members and has strict rate limits. Configure custom SMTP before inviting other users. See [email SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+6. Passwords are passed to Supabase Auth, never stored in reading records/backups. New passwords must have at least 8 characters in the UI; server policy may require more. Logged-in users can also set/change their password. Failed operations display errors and clear password fields.
 
-References: [Google provider setup](https://supabase.com/docs/guides/auth/social-login/auth-google), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+### Persistence and conflicts
+
+- Guest state keeps the original localStorage/IndexedDB location. Each signed-in account has its own local record and cloud row. Sign-out returns to the guest copy; it does not upload account A's records into account B.
+- First sign-in offers an explicit merge of guest data, retaining the guest copy. Each account records whether this merge was already done.
+- Edits persist locally immediately. Sync runs after changes, every 15 seconds while visible/online, on focus/reconnection, and via Sync now. Failed requests retain pending data. An account-switch generation guard discards stale responses; the database also checks the expected owner.
+- Writes use a server-side revision comparison. A collision re-reads and merges up to three times. Bookmarks and links use a three-way merge including removals. Independent notes merge; conflicting edits/deletion require a user choice and block uploading until resolved. Conflict alternatives are retained locally and included as `syncConflicts` in exports; restore currently imports the selected state, not the alternatives.
+- Profile fields and preferences use local changes over the last acknowledged baseline, otherwise the cloud value. Progress keeps the furthest chapter/completion; daily time takes the maximum per date to avoid duplicate activity, so simultaneous reading on two devices is not summed. Language, AI keys/chats and report history stay device-local.
+- For this first release, avoid editing the same account in multiple offline tabs of one browser: those tabs share a local cache. Different devices have independent caches and are covered by revision/merge tests.
+- Sign-out keeps unsynced account records on that browser for later sign-in. Export backups before clearing storage. A successful login alone is not proof that every pending change has synced; check the sync status.
+
+### Validation and release
+
+Stage the complete account change (including new files) before committing; `.idea` files are not needed:
+
+```powershell
+git add src package.json package-lock.json vite.config.ts supabase/schema.sql tests/account-sync.test.ts tests/account-rls.sql tests/email-auth.test.ts tests/mobile-layout.html README.md HANDOFF.md DEPLOYMENT.md
+```
+
+Then commit and push using your usual editor workflow. No database password, password or SMTP secret belongs in these files. The agent has not committed or pushed this change.
+
+Local verification: 51 automated tests, TypeScript and production build pass; 140 browser layout assertions pass across 320/390/430px portrait and 667px landscape. These viewport tests do not emulate actual iOS browser chrome or keyboard.
+
+`tests/account-sync.test.ts` exercises local persistence, explicit import, account changes, offline retries, conflicting notes and simultaneous device writes. `tests/account-rls.sql` was executed against the project in a rollback transaction: own writes succeed, stale writes return no rows, cross-account reads/writes and wrong-owner RPC calls fail. Anonymous access is denied. Supabase security advisors returned no findings.
+
+Before considering login complete in production, deploy these files, then test real registration/confirmation, password sign-in, confirmation resend, expired recovery links and password reset, Safari and installed PWA separately, sign-out/re-login, and two real devices. Those flows require the owner's email configuration and personal login and have not yet been end-to-end verified.
+
+References: [email/password setup](https://supabase.com/docs/guides/auth/passwords), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
 ## Validation in this change
 
@@ -52,7 +78,7 @@ Automated feed validation, request payload/error tests, all previous tests, Type
 
 The profile now supports a local display name, bio and four avatar choices, included in reading backups. Existing backups get default profile fields. Achievements count days with at least 60 seconds of existing reading/graph activity (1, 10, 30, 100 days), not login events. Settings has its own route.
 
-World summaries, diplomacy/policy filtering and 30-date local history are implemented; configure your own service using [SUMMARY-API.md](SUMMARY-API.md). The Supabase project exists, but cloud login, record synchronization and the summary backend are not implemented.
+World summaries, diplomacy/policy filtering and 30-date local history are implemented; configure your own service using [SUMMARY-API.md](SUMMARY-API.md). Supabase login and account synchronization are implemented; the summary backend is not implemented. Owner login-provider configuration and live sign-in verification are still required.
 
 ## Update recovery
 
@@ -60,4 +86,4 @@ The worker validates every precached resource against its build's SHA-256 integr
 
 The update button saves reading state before requesting activation and reports a failed or stalled update. First installation no longer forces a reload. Static HTML provides a bilingual reload screen if the JavaScript bundle cannot load.
 
-To publish this fix, include `scripts/sw-runtime.js` alongside the modified build script and application files. Wait for the Pages workflow to succeed, then reopen the installed app online. If an older installed copy is blank, close its window and any Safari tabs for this site, then reopen online to allow the worker to update. Do not clear website data or remove the installed app as the first recovery step: local records are not yet synced to Supabase. Validate the update on an actual iPhone after deployment.
+To publish this fix, include `scripts/sw-runtime.js` alongside the modified build script and application files. Wait for the Pages workflow to succeed, then reopen the installed app online. If an older installed copy is blank, close its window and any Safari tabs for this site, then reopen online to allow the worker to update. Do not clear website data or remove the installed app as the first recovery step: guest or pending records may not be synced to Supabase. Validate the update on an actual iPhone after deployment.

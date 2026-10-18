@@ -3,6 +3,6 @@ export default defineConfig({
   base: "/No-More-Scrolling/",
   build: {
     target: "es2022",
-    rollupOptions: { output: { manualChunks: { math: ["katex"] } } },
+    rollupOptions: { output: { manualChunks: { math: ["katex"], account: ["@supabase/supabase-js"] } } },
   },
 });

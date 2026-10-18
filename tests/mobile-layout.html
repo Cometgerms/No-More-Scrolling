@@ -19,7 +19,7 @@ document.querySelector('#run').onclick = async () => {
       const doc = frame.contentDocument, win = frame.contentWindow;
       doc.documentElement.style.setProperty('--safe-top',`${top}px`);
       doc.documentElement.style.setProperty('--safe-bottom',`${bottom}px`);
-      for (const route of ['read/zero-is-not-impossible','saved','today','saved']) {
+      for (const route of ['read/zero-is-not-impossible','saved','today','you','saved']) {
         win.location.hash = '#/' + route; await settle();
         const nav = doc.querySelector('.bottom-nav').getBoundingClientRect();
         const header = doc.querySelector('.app-header').getBoundingClientRect();
@@ -33,6 +33,7 @@ document.querySelector('#run').onclick = async () => {
           ['short page fills viewport', doc.querySelector('.app-shell').getBoundingClientRect().height >= win.innerHeight],
           ['no horizontal page overflow', doc.documentElement.scrollWidth <= win.innerWidth],
           ['progress gaps and touch targets', steps.every((r,i) => r.height >= 44 && r.width > 0 && (!i || r.left - steps[i-1].right >= 11.9))],
+          ['account touch targets', [...doc.querySelectorAll('.account-panel button,.account-panel input')].every(el => el.getBoundingClientRect().height >= 44)],
         ];
         for (const [name,ok] of checks) results.push(`${ok ? 'PASS' : 'FAIL'} ${width}×${height} ${route}: ${name}`);
       }

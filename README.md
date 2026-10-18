@@ -15,7 +15,7 @@ An iPhone-first, offline-capable knowledge discovery PWA. Full Chinese/English r
 - Each article has an explained multiple-choice question, reading-position persistence, optional completion, notes, bookmarks and feedback. Completion is not a mastery claim.
 - Fourteen concept nodes with labeled curated relations, searchable/filterable graph, drag/pan and zoom, accessible node-list alternatives, personal labeled links, deletion of personal links and concept notes/bookmarks.
 - Subject ordering preferences, Core/Deep preference and interest-keyword matching. Future selection de-prioritizes Not Interested; the other feedback is recorded for later editorial refinement. Personalization is intentionally modest with only two articles per subject.
-- Approximate active reading/graph time, optional 5/10/15-minute target and seven-day view. Background/hidden pages and 60-second inactivity pause counting; no streaks, login or leaderboards.
+- Approximate active reading/graph time, optional 5/10/15-minute target and seven-day view. Background/hidden pages and 60-second inactivity pause counting; no streaks or leaderboards.
 - Dark, light and system themes; reduced-motion styling; mobile safe areas; locally generated app icons.
 - IndexedDB persistence with an immediate localStorage mirror, validated JSON export/import and confirmation before restore. No user data is sent to a server.
 - Versioned precache of app shell, articles, interactions and math fonts. User-controlled update prompt avoids replacing an active reading session unexpectedly.
@@ -89,15 +89,15 @@ Mathematical claims include their assumptions. Finite Cantor drawings are explic
 
 Sources were checked during preparation on 2026-10-17. Numerical models and KaTeX syntax have automated tests; there has been no independent expert review. Suggested reading times include thinking and interaction and are estimates.
 
-The first seed corpus is intentionally eight substantial articles, not the originally proposed 28. Authentication, cross-device sync, adaptive mastery tracking and server-side daily generation are not implemented. Interest input never silently reads ChatGPT history. A future publishing pipeline should stage drafts, verify sources and math, and use approved fallback content if validation fails. All privileged credentials must remain in backend/Actions secrets, never in `VITE_*` variables or client bundles.
+The first seed corpus is intentionally eight substantial articles, not the originally proposed 28. Account login and cross-device sync are implemented; adaptive mastery tracking and server-side daily generation are not implemented. Interest input never silently reads ChatGPT history. A future publishing pipeline should stage drafts, verify sources and math, and use approved fallback content if validation fails. All privileged credentials must remain in backend/Actions secrets, never in `VITE_*` variables or client bundles.
 
-Local storage can be cleared by the user/browser, so export backups. Restoring currently replaces local data after confirmation; it does not merge two devices' histories. Repository/site content is public; personal notes stay on-device.
+Local storage can be cleared by the user/browser, so export backups. Restoring currently replaces local data after confirmation; it does not merge two devices' histories. Repository/site content is public; guest notes stay on-device, while signed-in account notes sync to Supabase under ownership access controls.
 
 ### 托管与数据库
 
-GitHub Pages 托管网页、文章、公式字体和互动资源，不提供个人数据库。现在文章随版本打包；收藏、笔记、关联、进度和计时写入当前设备的 IndexedDB，并有 localStorage 镜像。这不是电脑上的服务器，也不是云端备份。部署后电脑可以关机，但换设备不会自动带上历史记录。
+GitHub Pages 托管静态网页，Supabase 提供账号与云端数据库，不需要电脑保持开机。访客记录留在本机；登录后，每个账号使用独立的本地缓存和云端记录。首次登录可选择合并本机资料。收藏、笔记、进度、个人资料和阅读偏好支持同步，AI 密钥与聊天不会随之上传。
 
-如果需要“每次登录都能找回历史”，后续可接入 Supabase Auth + Postgres：云端保存与账号关联的记录，本地继续离线缓存，并实现离线修改重试、同步冲突处理和备份恢复。每张个人数据表需按用户配置 Row Level Security；浏览器只使用 publishable key，服务端密钥不进入前端。尚未创建云数据库，也尚未实现账号登录或同步，不能承诺现有本地记录永久留存。
+离线修改先存本机，联网后重试；同步时检查云端版本，笔记冲突需要选择保留版本。退出账号不会删除尚未同步的本机账号副本。查看“我的 → 账号与同步”的状态，清理浏览器前仍建议导出备份。邮箱密码、确认邮件/SMTP 和真实手机登录测试见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 ## Validation
 

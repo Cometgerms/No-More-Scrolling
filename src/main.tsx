@@ -4,6 +4,7 @@ import App from "./App";
 import { LanguageProvider, useLanguage } from "./i18n";
 import "katex/dist/katex.min.css";
 import "./styles.css";
+import { AccountProvider } from "./AccountContext";
 function LoadingError() {
   const { t } = useLanguage();
   return (
@@ -33,7 +34,7 @@ class Boundary extends React.Component<
 createRoot(document.getElementById("root")!).render(
   <LanguageProvider>
     <Boundary>
-      <App />
+      <AccountProvider><App /></AccountProvider>
     </Boundary>
   </LanguageProvider>,
 );

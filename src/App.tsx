@@ -32,7 +32,8 @@ import {
   type Feedback,
 } from "./model";
 import { dailySelection, localDate, validateState } from "./logic";
-import { loadState, saveState } from "./storage";
+import { useLibrary } from "./AccountContext";
+import { AccountPanel } from "./AccountPanel";
 import { Prose, RichText } from "./Math";
 import { Lab } from "./Labs";
 import { Graph } from "./Graph";
@@ -223,10 +224,10 @@ export default function App() {
   const { t, language, setLanguage } = useLanguage();
   const { articles, concepts } = useContent();
 
-  const [state, setState] = useState<State>(structuredClone(initialState)),
-    [ready, setReady] = useState(false),
-    [warning, setWarning] = useState(""),
-    [path, setPath] = useState(route),
+  const { state, ready, store, owner, conflicts, error: storageError } = useLibrary();
+  const setState = store.update;
+  const warning = storageError === "save" ? "保存失败：本地存储不可用。请及时导出备份。" : "";
+  const [path, setPath] = useState(route),
     [today, setToday] = useState(localDate),
     [selected, setSelected] = useState("measure"),
     [tracking, setTracking] = useState(true),
@@ -241,19 +242,6 @@ export default function App() {
   const tab = reader ? "today" : path;
   const update = useCallback((fn: (s: State) => State) => setState(fn), []);
   const notify = (msg: string) => setToast(msg);
-  useEffect(() => {
-    loadState().then((r) => {
-      setState(r.state);
-      setWarning(r.warning ?? "");
-      setReady(true);
-    });
-  }, []);
-  useEffect(() => {
-    if (!ready) return;
-    saveState(state).then((ok) => {
-      if (!ok) setWarning(t("保存失败：本地存储不可用。请及时导出备份。"));
-    });
-  }, [state, ready]);
   useEffect(() => {
     const listener = () => {
       setPath(route());
@@ -374,7 +362,7 @@ export default function App() {
     const blob = new Blob(
         [
           JSON.stringify(
-            { ...state, exportedAt: new Date().toISOString() },
+            { ...state, syncConflicts: conflicts, exportedAt: new Date().toISOString() },
             null,
             2,
           ),
@@ -460,7 +448,7 @@ export default function App() {
             onClick={async () => {
               setUpdating(true);
               try {
-                if (!await saveState(state)) throw new Error("Save failed");
+                if (!await store.persist()) throw new Error("Save failed");
                 const reg = await navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL);
                 if (!reg?.waiting) throw new Error("Update unavailable");
                 reg.waiting.postMessage("SKIP_WAITING");
@@ -608,7 +596,7 @@ export default function App() {
             concept={focusConcept}
             toggleSave={toggleSave}
           />
-        ) : tab === "you" ? <Profile state={state} update={update} /> : (
+        ) : tab === "you" ? <Profile state={state} update={update} cloud={!!owner}><AccountPanel /></Profile> : (
           <>
             <div className="page-heading">
               <a className="text-button" href="#/you">← {language === "en" ? "Profile" : "个人资料"}</a><h1>{language === "en" ? "Settings" : "设置"}</h1>
@@ -734,7 +722,7 @@ export default function App() {
             </section>
             <section className="settings-section">
               <h2>{t("你的数据，在你手里。")}</h2>
-              <p>{t("收藏、笔记、连线与记录保存在这台设备的浏览器中，不会上传。清理网站数据或更换设备前，请导出备份。")}</p>
+              <p>{language === "en" ? "Guest records stay on this device. When signed in, your account library syncs with Supabase. Keep an exported backup before clearing website data." : "访客记录保存在本机；登录后的账号资料会同步到 Supabase。清理网站数据前，请导出备份。"}</p>
               <div className="button-row">
                 <button className="secondary" onClick={exportBackup}>
                   <Download size={17} />{t("导出备份")}</button>
