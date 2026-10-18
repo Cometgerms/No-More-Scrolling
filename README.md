@@ -118,3 +118,7 @@ The existing repository Apache-2.0 LICENSE is preserved. External source materia
 Shared AI configuration for chat, world briefs and editable graph explanations; pinch zoom and direct concept details; categorized wearable badges, Rickroll achievement, illustrated avatars and clearer email sign-in.
 
 See [CONTENT_GUIDE.md](CONTENT_GUIDE.md) for the content publishing workflow.
+
+## v0.3.0
+
+Black/gold themes and a broken-infinity app icon; completed-reading-only graph; four news sources; daily bilingual global analysis with source-linked sections, coverage charts and 30-day published history. See [DEPLOYMENT.md](DEPLOYMENT.md) to configure the scheduled API job.

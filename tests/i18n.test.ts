@@ -69,7 +69,7 @@ test("all English labs and the concept graph render without untranslated interfa
     assert.ok(html.includes("THOUGHT LAB"));
   }
   const html = renderEnglish(React.createElement(Graph, {
-    state: initialState, update: () => {}, open: () => {}, selected: "measure", setSelected: () => {},
+    state: { ...initialState, progress: Object.fromEntries(articles.map(a => [a.id, {section:0, complete:true}])) }, update: () => {}, open: () => {}, selected: "measure", setSelected: () => {},
   }));
   assert.ok(!han.test(html));
   assert.ok(html.includes("Countable additivity"));
@@ -95,6 +95,7 @@ test("translation does not mutate the source corpus or stored user notes and pro
 
 test("English graph leaves personal notes and connection labels in their original language", () => {
   const state = structuredClone(initialState);
+  state.progress = Object.fromEntries(articles.map(a => [a.id, {section:0, complete:true}]));
   state.notes.measure = "今日";
   state.edges = [{ from: "measure", to: "halting", label: "数学", personal: true }];
   const html = renderEnglish(React.createElement(Graph, {

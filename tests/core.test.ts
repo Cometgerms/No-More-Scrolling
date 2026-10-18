@@ -154,7 +154,7 @@ test("all eight labs and the concept graph render without runtime exceptions", (
   }
   const html = renderToString(
     React.createElement(Graph, {
-      state: initialState,
+      state: { ...initialState, progress: Object.fromEntries(articles.map(a => [a.id, {section:0, complete:true}])) },
       update: () => {},
       open: () => {},
       selected: "measure",

@@ -5,7 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
   schedule:
-    - cron: '23 * * * *'
+    - cron: '23 10 * * *'
 permissions:
   contents: read
 concurrency:
@@ -24,7 +24,16 @@ jobs:
       - run: npm test
       - name: Fetch world headlines
         if: github.event_name != 'pull_request'
-        run: node scripts/fetch-world.mjs
+        run: node --import tsx scripts/fetch-world.mjs
+      - name: Fetch archive and generate daily world analysis
+        if: github.event_name != 'pull_request'
+        env:
+          WORLD_AI_KEY: ${{ secrets.WORLD_AI_KEY }}
+          WORLD_AI_ENDPOINT: ${{ vars.WORLD_AI_ENDPOINT }}
+          WORLD_AI_MODEL: ${{ vars.WORLD_AI_MODEL }}
+          WORLD_ARCHIVE_URL: https://cometgerms.github.io/No-More-Scrolling/world-analysis.json
+          WORLD_GENERATE: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+        run: node --import tsx scripts/generate-world.ts
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'

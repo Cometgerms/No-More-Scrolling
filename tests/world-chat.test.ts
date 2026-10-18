@@ -18,7 +18,7 @@ test("feed is bounded, chronologically sorted, and local publisher snapshot is v
   const value = fixture();
   value.events = Array.from({ length: 12 }, (_, i) => ({ ...value.events[0], id: String(i), publishedAt: `2024-12-${String(i+1).padStart(2,"0")}T10:00:00Z` }));
   const result = parseFeed(value);
-  assert.equal(result.events.length, 8); assert.equal(result.events[0].id, "11");
+  assert.equal(result.events.length, 12); assert.equal(result.events[0].id, "11");
   assert.equal(value.events.length, 12);
   const feed = parseFeed(JSON.parse(readFileSync(new URL("../public/world-feed.json", import.meta.url), "utf8")));
   assert.ok(feed.events.length > 0);

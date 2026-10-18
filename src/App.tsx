@@ -264,7 +264,7 @@ export default function App() {
         document.documentElement.dataset.theme = mode;
         document
           .querySelector('meta[name="theme-color"]')
-          ?.setAttribute("content", mode === "dark" ? "#101410" : "#f5f5ee");
+          ?.setAttribute("content", mode === "dark" ? "#111110" : "#f7f3e9");
       };
     apply();
     media.addEventListener("change", apply);
@@ -390,6 +390,8 @@ export default function App() {
       notify(e instanceof Error ? e.message : t("无法读取备份"));
     }
   }
+  const learnedConcepts = concepts.filter(c => articles.some(a => state.progress[a.id]?.complete && a.concepts.includes(c.id)));
+  const graphConcept = learnedConcepts.find(c => c.id === selected) ?? learnedConcepts[0];
   const ids = state.daily[today] ?? dailySelection(today, state),
     daily = ids
       .map((id) => articles.find((a) => a.id === id)!)
@@ -796,7 +798,7 @@ export default function App() {
         id: path,
         title: `${article.title} · ${(state.progress[article.id]?.section ?? 0) + 1}/${article.sections.length}`,
         text: JSON.stringify({ title: article.title, section: article.sections[state.progress[article.id]?.section ?? 0], lab: (state.progress[article.id]?.section ?? 0) === 2 ? article.labIntro : undefined, sources: article.sources }),
-      } : { id: tab, title: language === "en" ? (navItems.find(n => n.id === tab)?.en ?? "Page") : (navItems.find(n => n.id === tab)?.label ?? "页面"), text: tab === "explore" ? JSON.stringify(concepts.find(c => c.id === selected)) ?? "" : tab === "today" ? daily.map(a => `${a.title}: ${a.question}`).join("\n") : "" }} />
+      } : { id: tab, title: language === "en" ? (navItems.find(n => n.id === tab)?.en ?? "Page") : (navItems.find(n => n.id === tab)?.label ?? "页面"), text: tab === "explore" ? JSON.stringify(graphConcept) ?? "" : tab === "today" ? daily.map(a => `${a.title}: ${a.question}`).join("\n") : "" }} />
       <nav className="bottom-nav" aria-label={t("主导航")}>
         {navItems.map(({ id, label, en, icon: Icon }) => (
           <button

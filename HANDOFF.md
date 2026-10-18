@@ -1,6 +1,6 @@
 # Delivery status
 
-Application: No More Scrolling v0.2.0
+Application: No More Scrolling v0.3.0
 Target repository: https://github.com/Cometgerms/No-More-Scrolling
 Base main commit: 394b4cd049416b9752b47708c23fa7e63cd0eb58
 
@@ -17,10 +17,13 @@ Current GitHub inspection: remote main already contains the original v0.1 source
 The zip contains source plus dist/ (already-built static app). dist/ is ignored by git and recreated by CI. Serve it under /No-More-Scrolling/ using HTTPS; do not open index.html as a file URL. Read README.md for setup and iPhone testing.
 
 ## World brief and contextual assistant
-World.tsx / world-data.ts add a bounded source-linked BBC World feed, regional visualization and stale/offline cache. scripts/fetch-world.mjs runs hourly via deploy.yml; world-feed.json is excluded from SW precache/hash. Assistant.tsx / chat.ts add session-only BYOK configuration, current-page context preview, cancellable requests and math answers. auth.ts uses Supabase for email/password registration, login and password recovery; AccountContext and LibraryStore manage account-isolated state and revision-checked sync. See DEPLOYMENT.md for exact setup and limitations. No commit/push/deploy performed.
+World.tsx / world-data.ts add a bounded multi-publisher headline feed, regional visualization and stale/offline cache. scripts/fetch-world.mjs runs daily via deploy.yml; world-feed.json is excluded from SW precache/hash. Assistant.tsx / chat.ts add session-only BYOK configuration, current-page context preview, cancellable requests and math answers. auth.ts uses Supabase for email/password registration, login and password recovery; AccountContext and LibraryStore manage account-isolated state and revision-checked sync. See DEPLOYMENT.md for exact setup and limitations. No commit/push/deploy performed.
 
 ## Profile / world revision
 Profile.tsx adds persisted profile fields and activity achievements, with backward-compatible validation in logic.ts. Settings are at #/settings; assistant is labeled AI. Rickroll.tsx is a green dot dance with reduced-motion support; clicking opens the music video and unlocks a synced badge. World uses bundled Natural Earth land paths. world-summary.ts / WorldReports.tsx / SummarySettings.tsx share the chat API configuration by default (with an optional custom summary endpoint), bounded cached summaries, topic filters and 30 UTC-date visited snapshots. SUMMARY-API.md documents the backend contract and local-only history limits.
 
 ## Mobile layout fix
 Header height now includes top safe-area padding instead of squeezing controls into the old fixed height. Short pages fill the dynamic viewport; bottom navigation uses left/right inset centering without a transform. Reading progress uses four grid tracks, 12px gaps and 44px touch targets. tests/mobile-layout.html checks 320/390/430px portrait and 667px landscape, long/short route transitions and simulated safe-area insets: 96 assertions passed in Chromium. Physical iPhone Safari browser chrome/keyboard behavior still needs verification after deployment.
+
+## v0.3.0
+Black/gold themes with per-theme subject colors; broken-infinity SVG and PNG icons. Graph includes only concepts/edges/articles unlocked by completed reads. World gathers four RSS sources daily; `world-analysis.ts` validates and generates cited bilingual articles, `scripts/generate-world.ts` publishes up to 30 editions via the Pages artifact. Set WORLD_AI_KEY secret and WORLD_AI_ENDPOINT/WORLD_AI_MODEL variables; generation runs on schedule/manual dispatch, never PRs. Runtime JSON is excluded from the app-shell precache. No real model call has been made during implementation; provider setup remains owner work.

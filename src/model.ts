@@ -80,10 +80,10 @@ export const SUBJECTS: Record<
   Subject,
   { name: string; en: string; color: string; symbol: string }
 > = {
-  math: { name: "数学", en: "MATHEMATICS", color: "#c1f27b", symbol: "∑" },
-  cs: { name: "计算机", en: "COMPUTER SCIENCE", color: "#87d8e4", symbol: "⌘" },
-  history: { name: "历史", en: "HISTORY", color: "#edbc83", symbol: "⌛︎" },
-  politics: { name: "政治", en: "POLITICS", color: "#c5adf1", symbol: "◎" },
+  math: { name: "数学", en: "MATHEMATICS", color: "var(--subject-math)", symbol: "∑" },
+  cs: { name: "计算机", en: "COMPUTER SCIENCE", color: "var(--subject-cs)", symbol: "⌘" },
+  history: { name: "历史", en: "HISTORY", color: "var(--subject-history)", symbol: "⌛︎" },
+  politics: { name: "政治", en: "POLITICS", color: "var(--subject-politics)", symbol: "◎" },
 };
 export const initialState: State = {
   profile: { name: "", bio: "", avatar: 0 },

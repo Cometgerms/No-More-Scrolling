@@ -14,12 +14,13 @@ document.querySelector('#run').onclick = async () => {
   const button = document.querySelector('#run'); button.disabled = true;
   const results = [];
   try {
-    for (const [width,height,top,bottom] of [[320,667,0,0],[390,844,47,34],[430,932,59,34],[667,375,0,21]]) {
+    for (const theme of ["dark","light"]) for (const [width,height,top,bottom] of [[320,667,0,0],[390,844,47,34],[430,932,59,34],[667,375,0,21]]) {
       frame.width = width; frame.height = height;
       const doc = frame.contentDocument, win = frame.contentWindow;
+      doc.documentElement.dataset.theme = theme;
       doc.documentElement.style.setProperty('--safe-top',`${top}px`);
       doc.documentElement.style.setProperty('--safe-bottom',`${bottom}px`);
-      for (const route of ['read/zero-is-not-impossible','saved','today','you','explore','saved']) {
+      for (const route of ['read/zero-is-not-impossible','saved','today','you','explore','world','saved']) {
         win.location.hash = '#/' + route; await settle();
         const nav = doc.querySelector('.bottom-nav').getBoundingClientRect();
         const header = doc.querySelector('.app-header').getBoundingClientRect();
@@ -36,7 +37,7 @@ document.querySelector('#run').onclick = async () => {
           ['AI occupies header without overlapping language control', (() => { const r = doc.querySelector('.chat-launcher').getBoundingClientRect(); return r.height >= 44 && r.right <= language.left && r.bottom < header.bottom; })()],
           ['account touch targets', [...doc.querySelectorAll('.account-panel button,.account-panel input')].every(el => el.getBoundingClientRect().height >= 44)],
         ];
-        for (const [name,ok] of checks) results.push(`${ok ? 'PASS' : 'FAIL'} ${width}×${height} ${route}: ${name}`);
+        for (const [name,ok] of checks) results.push(`${ok ? 'PASS' : 'FAIL'} ${theme} ${width}×${height} ${route}: ${name}`);
       }
     }
     frame.width=390; frame.height=844;

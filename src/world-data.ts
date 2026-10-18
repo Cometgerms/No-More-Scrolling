@@ -1,7 +1,7 @@
 export const regions = ["global", "americas", "europe", "africa", "asia", "middle-east"] as const;
 export type Region = typeof regions[number];
 export type WorldEvent = { id: string; title: string; region: Region; publishedAt: string; url: string; source: string };
-export type WorldFeed = { version: 1; fetchedAt: string; events: WorldEvent[] };
+export type WorldFeed = { version: 1; fetchedAt: string; events: WorldEvent[]; sources?: { name: string; url: string; ok: boolean }[] };
 
 export function httpsUrl(value: string) {
   const url = new URL(value);
@@ -19,7 +19,8 @@ export function parseFeed(value: unknown): WorldFeed {
     httpsUrl(e.url);
     seen.add(e.id);
   }
-  return { version: 1, fetchedAt: feed.fetchedAt, events: [...feed.events].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 8) };
+  const sources = Array.isArray(feed.sources) ? feed.sources.slice(0,10).flatMap(s => { try { if (typeof s.name !== "string" || typeof s.ok !== "boolean") return []; return [{name:s.name.slice(0,100),url:httpsUrl(s.url),ok:s.ok}]; } catch { return []; } }) : undefined;
+  return { version: 1, fetchedAt: feed.fetchedAt, ...(sources ? {sources} : {}), events: [...feed.events].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 24) };
 }
 function validDate(value: unknown): value is string {
   return typeof value === "string" && Number.isFinite(Date.parse(value)) && Date.parse(value) <= Date.now() + 300_000;

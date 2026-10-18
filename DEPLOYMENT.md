@@ -12,8 +12,8 @@ No database or running personal computer is required for this stage. No changes 
 
 ## World brief
 
-- `node scripts/fetch-world.mjs` fetches up to eight BBC World RSS headlines, links and publication dates into `public/world-feed.json`. No article text or images are copied.
-- The build workflow runs this before production build, on pushes/manual runs and hourly at minute 23. GitHub scheduling can be delayed or suspended for inactive repositories. A failed fetch fails the build and leaves the previous live deployment intact.
+- `node --import tsx scripts/fetch-world.mjs` fetches up to sixteen headlines, links and publication dates from BBC, The Guardian, DW and Al Jazeera into `public/world-feed.json`. No article text or images are copied.
+- The build workflow runs this before production build, on pushes/manual runs and daily at 10:23 UTC. GitHub scheduling can be delayed or suspended for inactive repositories. Unavailable sources are skipped; if all fail, the bundled snapshot remains visible with its original timestamp.
 - Browser refresh checks the deployed JSON; it does not trigger a publisher fetch. While visible, the world page checks every five minutes. Data older than three hours is labeled stale. Failed requests retain the last validated browser snapshot.
 - Feed JSON is excluded from service-worker precaching and the asset version hash. A feed-only deployment does not require installing a new app shell. An already-open app that predates this feature needs the normal one-time app update.
 - Regional grouping uses headline keywords and can be inaccurate. Circles encode report counts only,  The offline world map uses Natural Earth land outlines; it shows no national borders. This is single-source reporting, not a ranking of global importance or independently verified claims.
@@ -78,7 +78,7 @@ Automated feed validation, request payload/error tests, all previous tests, Type
 
 The profile now supports a local display name, bio and four avatar choices, included in reading backups. Existing backups get default profile fields. Achievements count days with at least 60 seconds of existing reading/graph activity (1, 10, 30, 100 days), not login events. Settings has its own route.
 
-World summaries, diplomacy/policy filtering and 30-date local history are implemented. Summaries use the shared AI endpoint/model/key by default; an optional custom backend can follow [SUMMARY-API.md](SUMMARY-API.md). Supabase login and account synchronization are implemented; the summary backend is not implemented. Owner login-provider configuration and live sign-in verification are still required.
+World summaries, diplomacy/policy filtering and 30-date local history are implemented. Summaries use the shared AI endpoint/model/key by default; an optional custom backend can follow [SUMMARY-API.md](SUMMARY-API.md). Supabase login and account synchronization are implemented; scheduled global analysis is available after configuring the repository API secret and variables below. Owner login-provider configuration and live sign-in verification are still required.
 
 ## Update recovery
 
@@ -87,3 +87,24 @@ The worker validates every precached resource against its build's SHA-256 integr
 The update button saves reading state before requesting activation and reports a failed or stalled update. First installation no longer forces a reload. Static HTML provides a bilingual reload screen if the JavaScript bundle cannot load.
 
 To publish this fix, include `scripts/sw-runtime.js` alongside the modified build script and application files. Wait for the Pages workflow to succeed, then reopen the installed app online. If an older installed copy is blank, close its window and any Safari tabs for this site, then reopen online to allow the worker to update. Do not clear website data or remove the installed app as the first recovery step: guest or pending records may not be synced to Supabase. Validate the update on an actual iPhone after deployment.
+
+
+## v0.3.0：每日多来源报道与全局分析
+
+新闻源：BBC World、The Guardian World、DW、Al Jazeera。每家最多 4 条近期标题，保留原始链接。任一来源失败不影响其他来源；全部失败保留旧快照并通过采集时间显示陈旧情况。地区统计是报道分布，不是风险评分。
+
+GitHub → 本仓库 → Settings → Secrets and variables → Actions：
+
+- 在 **Secrets** 添加 `WORLD_AI_KEY`：模型 API Key。可与浏览器设置使用同一服务商/Key，但需要在此单独配置。不要把密钥放进代码、Variables 或聊天。
+- 在 **Variables** 添加 `WORLD_AI_ENDPOINT`：完整 HTTPS Chat Completions 地址，例如服务商给出的 `https://…/v1/chat/completions`。
+- 在 **Variables** 添加 `WORLD_AI_MODEL`：服务商支持的准确模型 ID。
+
+提交本版本后，在 Actions → Build, test and deploy → Run workflow 手动运行一次，检查日志和页面。此后计划每天 **10:23 UTC** 运行，GitHub 调度可能延迟。发布流程仍会在 push 时刷新报道；模型生成只在每日计划或手动运行时触发。同一 UTC 日若能读取到已发布的分析，会复用它，减少重复请求。
+
+每次新分析最多请求两种语言各一次；服务商按用量计费。密钥仅在 GitHub 任务的请求头使用，不进入 Pages 文件。发布的是公开报道的分析文章，不包含用户聊天、笔记、账号信息或密钥。
+
+`public/world-analysis.json` 保留最多 30 个 UTC 日期的中英文文章和各自证据快照；新部署先读取上次已发布的文件再追加，不自动 commit 生成数据。生成失败保留历史；未配置模型时新闻抓取和手动生成仍可用。浏览器缓存已读到的自动分析供离线使用。若已发布历史因网络错误无法读取，任务会停止部署以免覆盖历史，可稍后重试；首次发布的 404 会正常初始化。
+
+本地检查：`node --import tsx scripts/fetch-world.mjs`；自动文章：`WORLD_GENERATE=true` 并通过本机环境配置上述三项后运行 `node --import tsx scripts/generate-world.ts`。不要把密钥写进 shell 历史。通常直接在 GitHub Secrets 配置后手动运行工作流更简单。
+
+图标已同步更新 SVG、192/512 PNG 和 Apple touch icon。iOS 主屏幕可能继续显示系统缓存的旧图标；应用正文的版本号可用于确认代码更新。

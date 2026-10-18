@@ -10,7 +10,7 @@ async function walk(dir) {
     )
   ).flat();
 }
-const files = (await walk("dist")).filter((f) => !f.endsWith("/sw.js") && !f.endsWith("/world-feed.json"));
+const files = (await walk("dist")).filter((f) => !f.endsWith("/sw.js") && !f.endsWith("/world-feed.json") && !f.endsWith("/world-analysis.json"));
 const runtime = await readFile("scripts/sw-runtime.js", "utf8");
 const hash = createHash("sha256").update(runtime);
 for (const file of files.sort()) hash.update(await readFile(file));

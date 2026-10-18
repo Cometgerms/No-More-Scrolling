@@ -34,7 +34,11 @@ export function Graph({
   setSelected: (id: string) => void;
 }) {
   const { t, language } = useLanguage();
-  const { concepts, edges, articles } = useContent();
+  const content = useContent();
+  const articles = content.articles.filter(a => state.progress[a.id]?.complete);
+  const learned = new Set(articles.flatMap(a => a.concepts));
+  const concepts = content.concepts.filter(c => learned.has(c.id));
+  const edges = content.edges.filter(e => learned.has(e.from) && learned.has(e.to));
 
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState<Subject | "all">("all"),
@@ -64,12 +68,12 @@ export function Graph({
   }
   const svg = useRef<SVGSVGElement>(null);
   const position = (id: string): [number, number] => positions[id] ?? [100 + (concepts.findIndex(c => c.id === id) % 3) * 190, 150 + Math.floor(concepts.findIndex(c => c.id === id) / 3) * 150];
-  const allEdges = [...edges, ...state.edges],
+  const allEdges = [...edges, ...state.edges.filter(e => learned.has(e.from) && learned.has(e.to))],
     focus = concepts.find((c) => c.id === selected) ?? concepts[0];
   const near = new Set([
-    focus.id,
+    focus?.id,
     ...allEdges
-      .filter((e) => e.from === focus.id || e.to === focus.id)
+      .filter((e) => e.from === focus?.id || e.to === focus?.id)
       .flatMap((e) => [e.from, e.to]),
   ]);
   const filtered = concepts.filter(
@@ -87,12 +91,13 @@ export function Graph({
     setTarget("");
     setLabel("");
   }
+  if (!focus) return <section className="empty learned-empty"><h1>{language === "en" ? "Your graph starts with a finished read" : "读完一篇，点亮你的图谱"}</h1><p>{language === "en" ? "Only concepts from completed articles appear here. Your notes and connections are kept." : "这里只显示已读完文章里的概念。已有笔记和关联仍会保留。"}</p><a className="primary" href="#/today">{language === "en" ? "Read today’s selection →" : "去读今日精选 →"}</a></section>;
   return (
     <>
       <div className="page-heading">
         <span className="eyebrow">YOUR CONNECTED MIND</span>
         <h1>{language === "en" ? "Knowledge graph" : "知识图谱"}</h1>
-        <p>{language === "en" ? "Open a concept, trace a connection, build your own understanding." : "打开概念、查看关联，再留下自己的理解。"}</p>
+        <p>{language === "en" ? "Concepts from your completed reads. Open a node or trace a connection." : "只展示已读完文章的概念，点击节点或连线继续探索。"}</p>
       </div>
       <div className="search">
         <Search size={18} />
@@ -171,7 +176,7 @@ export function Graph({
               if (!visible.has(e.from) || !visible.has(e.to)) return null;
               const [x1, y1] = position(e.from),
                 [x2, y2] = position(e.to);
-              const active = e.from === focus.id || e.to === focus.id;
+              const active = e.from === focus?.id || e.to === focus?.id;
               const path = `M${x1},${y1} Q${(x1+x2)/2+25},${(y1+y2)/2-18} ${x2},${y2}`;
               return <g key={i} className="graph-edge" role="button" tabIndex={0} aria-label={`${concepts.find(c => c.id === e.from)?.name} ↔ ${concepts.find(c => c.id === e.to)?.name}: ${state.edgeReasons?.[edgeKey(e.from,e.to)] ?? e.label}`} onClick={() => selectEdge(e)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); moved.current = false; selectEdge(e); } }}>
                 <path d={path} fill="none" stroke={active ? "var(--accent)" : "var(--muted)"} strokeWidth={active ? 2.5 : 1.5} opacity={active ? .65 : .25} strokeDasharray={e.personal ? "6 5" : undefined} />
@@ -324,7 +329,7 @@ export function Graph({
         </label>
         <div className="related-edges">
           {allEdges
-            .filter((e) => e.from === focus.id || e.to === focus.id)
+            .filter((e) => e.from === focus?.id || e.to === focus?.id)
             .map((e, i) => {
               const other = e.from === focus.id ? e.to : e.from;
               return (

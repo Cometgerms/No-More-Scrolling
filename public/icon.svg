@@ -1,4 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" fill="#101410"/>
-  <path d="M342 282C310 333 267 334 226 286L195 248C159 205 112 216 112 260C112 304 159 315 195 272L338 142M272 142H338V208" stroke="#c1f27b" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="gold" x1="130" y1="420" x2="390" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#a87c32"/><stop offset=".5" stop-color="#dfbd72"/><stop offset="1" stop-color="#f3d798"/></linearGradient>
+    <mask id="break"><rect width="512" height="512" fill="white"/><path d="M160 417L354 97" stroke="black" stroke-width="30"/></mask>
+  </defs>
+  <rect width="512" height="512" fill="#111110"/>
+  <rect x="19" y="19" width="474" height="474" rx="104" stroke="#dfbd72" stroke-opacity=".14"/>
+  <path d="M256 256C220 212 185 164 137 183C62 214 88 333 155 330C201 328 224 287 256 256C288 225 311 184 357 182C424 178 451 296 377 327C328 348 292 300 256 256Z" stroke="#f3eee1" stroke-width="49" mask="url(#break)"/>
+  <path d="M276 236L337 80L394 112ZM236 276L177 431L121 405Z" fill="url(#gold)"/>
+  <path d="M261 183L278 167L270 215ZM241 329L224 345L232 297Z" fill="#dfbd72"/>
 </svg>
