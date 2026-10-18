@@ -40,7 +40,7 @@ createRoot(document.getElementById("root")!).render(
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register(`${import.meta.env.BASE_URL}sw.js`)
+      .register(`${import.meta.env.BASE_URL}sw.js`, { updateViaCache: "none" })
       .then((reg) => {
         if (reg.waiting) window.dispatchEvent(new Event("nms-update-ready"));
         reg.addEventListener("updatefound", () => {
@@ -55,8 +55,9 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
       });
   });
   let refreshing = false;
+  const wasControlled = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (!refreshing) {
+    if (wasControlled && !refreshing) {
       refreshing = true;
       location.reload();
     }

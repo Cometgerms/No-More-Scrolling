@@ -255,5 +255,7 @@
   "语言 / Language": "Language",
   "选择语言": "Choose language",
   "界面、文章和互动支持中英文切换，公式保持一致。笔记与个人关联保留你的原文。": "Switch the interface, articles and experiments between Chinese and English. Formulas stay consistent; your notes and personal connections keep their original wording.",
-  "世界": "World"
+  "世界": "World",
+  "正在更新…": "Updating…",
+  "更新未完成，请保持联网后重试。": "Update did not finish. Stay online and try again."
 }

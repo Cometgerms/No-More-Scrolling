@@ -232,7 +232,8 @@ export default function App() {
     [tracking, setTracking] = useState(true),
     [toast, setToast] = useState(""),
     [offline, setOffline] = useState(!navigator.onLine),
-    [updateReady, setUpdateReady] = useState(false);
+    [updateReady, setUpdateReady] = useState(false),
+    [updating, setUpdating] = useState(false);
   const lastActive = useRef(Date.now()),
     fileInput = useRef<HTMLInputElement>(null);
   const reader = path.startsWith("read/"),
@@ -455,11 +456,24 @@ export default function App() {
       )}
       {updateReady && (
         <div className="notice">{t("新版本已准备好。")}<button
+            disabled={updating}
             onClick={async () => {
-              const reg = await navigator.serviceWorker.getRegistration();
-              reg?.waiting?.postMessage("SKIP_WAITING");
+              setUpdating(true);
+              try {
+                if (!await saveState(state)) throw new Error("Save failed");
+                const reg = await navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL);
+                if (!reg?.waiting) throw new Error("Update unavailable");
+                reg.waiting.postMessage("SKIP_WAITING");
+                window.setTimeout(() => {
+                  setUpdating(false);
+                  notify("更新未完成，请保持联网后重试。");
+                }, 15000);
+              } catch {
+                setUpdating(false);
+                notify("更新未完成，请保持联网后重试。");
+              }
             }}
-          >{t("更新应用")}</button>
+          >{t(updating ? "正在更新…" : "更新应用")}</button>
         </div>
       )}
       <main key={path}>

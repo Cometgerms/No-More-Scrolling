@@ -11,13 +11,14 @@ async function walk(dir) {
   ).flat();
 }
 const files = (await walk("dist")).filter((f) => !f.endsWith("/sw.js") && !f.endsWith("/world-feed.json"));
-const hash = createHash("sha256");
+const runtime = await readFile("scripts/sw-runtime.js", "utf8");
+const hash = createHash("sha256").update(runtime);
 for (const file of files.sort()) hash.update(await readFile(file));
 const version = `nms-${hash.digest("hex").slice(0, 12)}`;
-const assets = files.map((f) => "./" + f.slice(5));
+const assets = await Promise.all(files.map(async (f) => ["./" + f.slice(5), "sha256-" + createHash("sha256").update(await readFile(f)).digest("base64")]));
 await writeFile(
   "dist/sw.js",
-  `const CACHE=${JSON.stringify(version)};\nconst ASSETS=${JSON.stringify(assets)};\nself.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));\nself.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('nms-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));\nself.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();});\nself.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;const url=new URL(e.request.url);if(!url.pathname.startsWith(new URL(self.registration.scope).pathname))return;e.respondWith((async()=>{const cache=await caches.open(CACHE);if(e.request.mode==='navigate'){return(await cache.match('./index.html'))||fetch(e.request);}return(await cache.match(e.request))||fetch(e.request);})());});\n`,
+  `const CACHE=${JSON.stringify(version)};\nconst ASSETS=${JSON.stringify(assets)};\n${runtime}`,
 );
 console.log(
   `Offline cache ${version}: ${assets.length} local assets (including math fonts).`,

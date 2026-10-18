@@ -22,7 +22,15 @@
     <title>No More Scrolling</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="padding: max(48px, env(safe-area-inset-top)) 24px; background: #101410; color: #dce8d5; min-height: 100vh; font-family: system-ui">
+        <h1>No More Scrolling</h1>
+        <p>正在加载应用 · Loading app…</p>
+        <p>如果长时间停在这里，请联网后重新加载。本地记录不会被清除。</p>
+        <p>If loading stalls, reconnect and reload. Your local records will be kept.</p>
+        <button onclick="location.reload()" style="padding: 12px 20px">重新加载 / Reload</button>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

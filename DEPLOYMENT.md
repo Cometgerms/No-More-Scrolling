@@ -35,7 +35,7 @@ The chat shows and previews the current page excerpt. Reading sections and publi
 
 After deployment:
 
-1. Create a Supabase project, configure the exact production site URL and localhost redirect allowlist.
+1. Supabase project `no-more-scrolling` (`lanrrewsskfqylinmsag`, US East) was created on 2026-10-18 in Cometgerms's Org. Configure the exact production site URL and localhost redirect allowlist next.
 2. Enable Google provider and configure its OAuth client/secret in Supabase (never in this repository). Enable email OTP and production email delivery.
 3. Implement the `AuthGateway` with the official Supabase client, including callback processing, session refresh, logout and error states.
 4. Add per-user data tables and Row Level Security policies; only the owning user may read/write their records. No service-role key in the browser.
@@ -52,4 +52,12 @@ Automated feed validation, request payload/error tests, all previous tests, Type
 
 The profile now supports a local display name, bio and four avatar choices, included in reading backups. Existing backups get default profile fields. Achievements count days with at least 60 seconds of existing reading/graph activity (1, 10, 30, 100 days), not login events. Settings has its own route.
 
-World summaries, diplomacy/policy filtering and 30-date local history are implemented; configure your own service using [SUMMARY-API.md](SUMMARY-API.md). No summary backend or cloud login has been provisioned.
+World summaries, diplomacy/policy filtering and 30-date local history are implemented; configure your own service using [SUMMARY-API.md](SUMMARY-API.md). The Supabase project exists, but cloud login, record synchronization and the summary backend are not implemented.
+
+## Update recovery
+
+The worker validates every precached resource against its build's SHA-256 integrity and bypasses the HTTP cache during installation. An incomplete deployment fails installation while retaining the previous worker. Two previous app caches remain available for existing tabs requesting old bundles; navigation always uses the active build's HTML. Reading data in localStorage and IndexedDB is not cleared by updates.
+
+The update button saves reading state before requesting activation and reports a failed or stalled update. First installation no longer forces a reload. Static HTML provides a bilingual reload screen if the JavaScript bundle cannot load.
+
+To publish this fix, include `scripts/sw-runtime.js` alongside the modified build script and application files. Wait for the Pages workflow to succeed, then reopen the installed app online. If an older installed copy is blank, close its window and any Safari tabs for this site, then reopen online to allow the worker to update. Do not clear website data or remove the installed app as the first recovery step: local records are not yet synced to Supabase. Validate the update on an actual iPhone after deployment.
