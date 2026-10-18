@@ -30,7 +30,8 @@ export function mergeStates(base: State, local: State, remote: State) {
   for (const id of keys(base.progress, local.progress, remote.progress)) {
     const b = base.progress[id], l = local.progress[id], r = remote.progress[id];
     const value = choose(b, l, r);
-    if (value) state.progress[id] = l && r ? { ...value, section: Math.max(l.section, r.section), complete: l.complete || r.complete } : value;
+    // The current chapter is a navigation choice; returning to an earlier one is intentional.
+    if (value) state.progress[id] = l && r ? { ...value, section: b ? choose(b.section, l.section, r.section) : l.section, complete: l.complete || r.complete } : value;
   }
   state.seconds = {};
   for (const id of keys(local.seconds, remote.seconds)) state.seconds[id] = Math.max(local.seconds[id] ?? 0, remote.seconds[id] ?? 0);

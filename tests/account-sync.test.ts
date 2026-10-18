@@ -36,6 +36,29 @@ test("three-way bookmarks retain independent changes and removals", () => {
   const remote = structuredClone(base); remote.saved.push("cache");
   assert.deepEqual(new Set(mergeStates(base, local, remote).state.saved), new Set(["cantor", "cache"]));
 });
+test("going back a chapter survives synchronization without undoing completion", async () => {
+  const f = fixture(); const state = emptyState();
+  state.progress["zero-is-not-impossible"] = { section: 2, complete: true };
+  f.rows.set("A", { state, revision: 1 });
+  await f.store.activate({ id: "A" }); await settle();
+  f.store.update(s => ({ ...s, progress: { ...s.progress, "zero-is-not-impossible": { ...s.progress["zero-is-not-impossible"], section: 1 } } }));
+  await f.store.sync(); await f.store.sync();
+  assert.equal(f.store.getSnapshot().state.progress["zero-is-not-impossible"].section, 1);
+  assert.equal(f.rows.get("A")?.state.progress["zero-is-not-impossible"].section, 1);
+  assert.equal(f.store.getSnapshot().state.progress["zero-is-not-impossible"].complete, true);
+});
+test("going back during an upload is not replaced by the upload response", async () => {
+  const f = fixture(); await f.store.activate({ id: "A" }); await settle();
+  const original = f.cloud.write; let release!: () => void;
+  f.cloud.write = async (...args) => { await new Promise<void>(resolve => { release = resolve; }); return original(...args); };
+  f.store.update(s => ({ ...s, progress: { "zero-is-not-impossible": { section: 2, complete: false } } }));
+  const uploading = f.store.sync(); await settle();
+  f.store.update(s => ({ ...s, progress: { "zero-is-not-impossible": { section: 1, complete: false } } }));
+  release(); await uploading;
+  assert.equal(f.store.getSnapshot().state.progress["zero-is-not-impossible"].section, 1);
+  f.cloud.write = original; await f.store.sync();
+  assert.equal(f.rows.get("A")?.state.progress["zero-is-not-impossible"].section, 1);
+});
 test("concurrent notes and delete/edit conflicts retain both alternatives", () => {
   const base = emptyState(); base.notes.measure = "original";
   const local = structuredClone(base); delete local.notes.measure;
