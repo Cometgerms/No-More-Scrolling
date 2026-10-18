@@ -1,7 +1,7 @@
 export type Subject = "math" | "cs" | "history" | "politics";
 export type Feedback = "basic" | "hard" | "interesting" | "skip";
 export type Block = {
-  kind: "text" | "math" | "note" | "code";
+  kind: "text" | "math" | "note" | "code" | "figure";
   body: string;
   label?: string;
 };
@@ -60,6 +60,7 @@ export type Progress = {
   feedback?: Feedback;
 };
 export type State = {
+  profile: { name: string; bio: string; avatar: number };
   version: 1;
   saved: string[];
   notes: Record<string, string>;
@@ -83,6 +84,7 @@ export const SUBJECTS: Record<
   politics: { name: "政治", en: "POLITICS", color: "#c5adf1", symbol: "◎" },
 };
 export const initialState: State = {
+  profile: { name: "", bio: "", avatar: 0 },
   version: 1,
   saved: [],
   notes: {},

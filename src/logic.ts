@@ -119,6 +119,11 @@ export function validateState(raw: unknown): State {
     ]),
     isRecord = (v: unknown): v is Record<string, unknown> =>
       !!v && typeof v === "object" && !Array.isArray(v);
+  if (isRecord(r.profile)) out.profile = {
+    name: typeof r.profile.name === "string" ? r.profile.name.slice(0, 40) : "",
+    bio: typeof r.profile.bio === "string" ? r.profile.bio.slice(0, 200) : "",
+    avatar: Number.isInteger(r.profile.avatar) && Number(r.profile.avatar) >= 0 && Number(r.profile.avatar) <= 3 ? Number(r.profile.avatar) : 0,
+  };
   if (Array.isArray(r.saved))
     out.saved = [
       ...new Set(

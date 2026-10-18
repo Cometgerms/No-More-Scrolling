@@ -1,13 +1,16 @@
 # No More Scrolling
 
-An iPhone-first, offline-capable knowledge discovery PWA. Chinese narrative, English terminology, properly typeset mathematics, and small experiments that reward understanding rather than endless consumption.
+An iPhone-first, offline-capable knowledge discovery PWA. Full Chinese/English reading, properly typeset mathematics, and small experiments that reward understanding rather than endless consumption.
 
 **Planned Pages URL:** https://cometgerms.github.io/No-More-Scrolling/
 
 ## What works in v0.1
 
 - Eight curated, four-section articles across mathematics, computer science, history and politics. Four daily picks are frozen for the device's local calendar date. This finite seed library rotates; it does not pretend to generate new articles every day.
+- Chinese/English switching for the interface, all eight articles, explanations, quizzes, labs and curated graph. Use the header EN/中文 button or You → Language. Language selection is remembered on this device; switching preserves the current chapter and active experiment. Personal notes and connection labels retain their original wording.
 - KaTeX formulas and local bundled fonts; proof sketches, prerequisites, deeper explanations, dated source/verification notes.
+- Inline TeX in narrative, callouts and quizzes using `\( ... \)`; multiline derivations, keyboard-focusable formula scrolling and accessible MathML. Probability-space notation and density integrals accompany the Chinese explanations.
+- Three inline SVG experiments: interval vs singleton probability, finite Cantor construction and diagonal bit-flipping. These work offline and respect reduced motion; diagrams are explicitly finite illustrations rather than proofs.
 - Eight functioning labs: continuous probability interval, animated Cantor construction, halting contradiction trace, direct-mapped cache, historical timeline, evidence classification, weighted pairwise voting and agenda-order experiment.
 - Each article has an explained multiple-choice question, reading-position persistence, optional completion, notes, bookmarks and feedback. Completion is not a mastery claim.
 - Fourteen concept nodes with labeled curated relations, searchable/filterable graph, drag/pan and zoom, accessible node-list alternatives, personal labeled links, deletion of personal links and concept notes/bookmarks.
@@ -29,6 +32,19 @@ npm run dev
 ```
 
 Vite serves the app under `/No-More-Scrolling/`, matching the GitHub Pages project path. `npm run preview` serves the production build. Hash routing means refreshing an article does not require server rewrites.
+
+### 本机与 iPhone 预览
+
+依赖已安装但终端找不到 npm 时，可用 `node node_modules/vite/bin/vite.js --host 0.0.0.0` 启动开发预览，用 `node --import tsx --test tests/*.test.ts` 运行测试。首次安装仍建议按上面的 Node/npm 流程，保留项目的 `package-lock.json`。
+
+1. 电脑浏览器打开启动时显示的 Local URL，路径保留 `/No-More-Scrolling/`。
+2. 开发服务下可打开 `/No-More-Scrolling/tests/mobile-preview.html`，在 390 × 844 的 iframe 中检查窄屏排版；这不能替代 Safari 真机测试。
+3. iPhone 和电脑连同一 Wi-Fi，在 Safari 输入启动时显示的 Network URL。如果 Windows 防火墙提示，仅按需要允许可信的专用网络。部分校园/访客网络会隔离设备。
+4. 局域网 HTTP 适合先检查排版与交互。正式的离线缓存与安装验收使用部署后的 HTTPS 地址，按下面的真机清单测试。
+
+图标以 `public/icon.svg` 为源：深墨绿底、荧光绿的开放循环与出口箭头。180、192、512 像素 PNG 已同步更新，网页标识使用同一个源。已安装的主屏幕图标可能继续显示旧图，可在部署更新后重新从 Safari 添加快捷方式。
+
+本次检查远程 Actions：build 已通过，deploy 在 `configure-pages` 失败，日志为 `Get Pages site failed / Not Found`。先按下一节将 Pages Source 设为 GitHub Actions，再重新运行部署。该结论描述的是远程现有版本；本地改动尚未提交或推送。
 
 ## GitHub Pages setup (one time)
 
@@ -59,8 +75,10 @@ Real-device Safari/standalone/offline QA must be completed on an iPhone. Automat
 - `src/model.ts`: typed Article, Concept, Edge, progress and versioned user state.
 - `src/content.ts`: curated content and citations. Add a unique article ID, one subject, prerequisites, concept IDs, narrative sections, an existing lab type, deeper explanation, quiz/explanations, sources and publication/verification metadata.
 - `src/Labs.tsx`: subject-specific interactive modules. New lab types need a model update, component and domain tests.
+- `src/ConceptFigure.tsx`: inline visual experiments selected by `figure` blocks (`measure`, `cantor`, `diagonal`).
 - `src/logic.ts`: local-date daily selection, backup validation and mathematical interaction models.
 - `src/storage.ts`: local persistence and IndexedDB mirror.
+- `src/i18n.tsx`, `src/content.en.json`, `src/ui.en.json`: language context and local translation catalogs. Chinese source strings are keys; changing Chinese copy requires updating the matching catalog entry. Keep article/concept IDs, formulas, code, quiz answer indices and source URLs identical. Both languages ship in the offline bundle. The separate `nms-language-v1` preference is device-local and is not included in reading-data backups.
 - `scripts/build-sw.mjs`: content-hashed precache; no CDN is needed at runtime.
 
 New articles are compiled with the application. Commit content changes to publish; the installed PWA receives them through its update prompt. Today’s selection stays stable once chosen; new material joins future selections and the full library.
@@ -71,16 +89,26 @@ Mathematical claims include their assumptions. Finite Cantor drawings are explic
 
 Sources were checked during preparation on 2026-10-17. Numerical models and KaTeX syntax have automated tests; there has been no independent expert review. Suggested reading times include thinking and interaction and are estimates.
 
-The first seed corpus is intentionally eight substantial articles, not the originally proposed 28. Full English translations, authentication, cross-device sync, adaptive mastery tracking and server-side daily generation are not implemented. Interest input never silently reads ChatGPT history. A future publishing pipeline should stage drafts, verify sources and math, and use approved fallback content if validation fails. All privileged credentials must remain in backend/Actions secrets, never in `VITE_*` variables or client bundles.
+The first seed corpus is intentionally eight substantial articles, not the originally proposed 28. Authentication, cross-device sync, adaptive mastery tracking and server-side daily generation are not implemented. Interest input never silently reads ChatGPT history. A future publishing pipeline should stage drafts, verify sources and math, and use approved fallback content if validation fails. All privileged credentials must remain in backend/Actions secrets, never in `VITE_*` variables or client bundles.
 
 Local storage can be cleared by the user/browser, so export backups. Restoring currently replaces local data after confirmation; it does not merge two devices' histories. Repository/site content is public; personal notes stay on-device.
+
+### 托管与数据库
+
+GitHub Pages 托管网页、文章、公式字体和互动资源，不提供个人数据库。现在文章随版本打包；收藏、笔记、关联、进度和计时写入当前设备的 IndexedDB，并有 localStorage 镜像。这不是电脑上的服务器，也不是云端备份。部署后电脑可以关机，但换设备不会自动带上历史记录。
+
+如果需要“每次登录都能找回历史”，后续可接入 Supabase Auth + Postgres：云端保存与账号关联的记录，本地继续离线缓存，并实现离线修改重试、同步冲突处理和备份恢复。每张个人数据表需按用户配置 Row Level Security；浏览器只使用 publishable key，服务端密钥不进入前端。尚未创建云数据库，也尚未实现账号登录或同步，不能承诺现有本地记录永久留存。
 
 ## Validation
 
 `npm test` checks local dates (including New York UTC boundaries), stable daily selection, feedback de-prioritization, cache traces, Cantor lengths, exhaustive small voting profiles, content references, formula rendering, backup roundtrips/sanitization, and server rendering of all labs and the graph.
+
+The bilingual tests also check translation coverage, English render output for every article/lab and the graph, valid translated inline TeX, preserved mathematical blocks/source URLs/quiz answers, placeholder interpolation and source-data immutability.
 
 `npm run build` runs TypeScript checking, Vite production bundling and generates the service worker. CI repeats tests/build. Visual/physical iPhone QA is documented above and is not claimed as automated coverage.
 
 ## License
 
 The existing repository Apache-2.0 LICENSE is preserved. External source material remains owned by its respective authors; this app links to sources and uses original summaries and diagrams.
+
+世界局势、AI 学伴、首次上线和账号接入步骤见 [DEPLOYMENT.md](DEPLOYMENT.md)。

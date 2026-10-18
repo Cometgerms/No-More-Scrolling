@@ -1,3 +1,4 @@
+import { useLanguage, useContent } from "./i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowDownToLine,
@@ -22,7 +23,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { articles, concepts } from "./content";
 import {
   SUBJECTS,
   initialState,
@@ -33,12 +33,18 @@ import {
 } from "./model";
 import { dailySelection, localDate, validateState } from "./logic";
 import { loadState, saveState } from "./storage";
-import { Prose } from "./Math";
+import { Prose, RichText } from "./Math";
 import { Lab } from "./Labs";
 import { Graph } from "./Graph";
+import { SummarySettings } from "./SummarySettings";
+import { Profile } from "./Profile";
+import { Rickroll } from "./Rickroll";
+import { World } from "./World";
+import { Assistant, AssistantProvider, AssistantSettings } from "./Assistant";
 const navItems = [
   { id: "today", label: "今日", en: "Today", icon: Grid2X2 },
   { id: "explore", label: "探索", en: "Explore", icon: Compass },
+  { id: "world", label: "世界", en: "World", icon: Compass },
   { id: "saved", label: "收藏", en: "Collection", icon: Bookmark },
   { id: "you", label: "我的", en: "You", icon: Settings2 },
 ];
@@ -166,6 +172,8 @@ function ArticleCard({
   state: State;
   open: (id: string) => void;
 }) {
+  const { t } = useLanguage();
+
   const sub = SUBJECTS[a.subject];
   return (
     <button
@@ -200,10 +208,10 @@ function ArticleCard({
           </span>
           <span>
             {state.progress[a.id]?.complete
-              ? "已探索"
+              ? t("已探索")
               : state.progress[a.id]
-                ? "继续探索"
-                : "互动探索"}
+                ? t("继续探索")
+                : t("互动探索")}
           </span>
           {state.saved.includes(a.id) && <Bookmark size={13} />}
         </div>
@@ -212,6 +220,9 @@ function ArticleCard({
   );
 }
 export default function App() {
+  const { t, language, setLanguage } = useLanguage();
+  const { articles, concepts } = useContent();
+
   const [state, setState] = useState<State>(structuredClone(initialState)),
     [ready, setReady] = useState(false),
     [warning, setWarning] = useState(""),
@@ -239,7 +250,7 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
     saveState(state).then((ok) => {
-      if (!ok) setWarning("保存失败：本地存储不可用。请及时导出备份。");
+      if (!ok) setWarning(t("保存失败：本地存储不可用。请及时导出备份。"));
     });
   }, [state, ready]);
   useEffect(() => {
@@ -375,17 +386,17 @@ export default function App() {
     a.download = `no-more-scrolling-${today}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
-    notify("备份已生成，请保存到“文件”。");
+    notify(t("备份已生成，请保存到“文件”。"));
   }
   async function importBackup(file: File) {
     try {
-      if (file.size > 5_000_000) throw new Error("备份文件超过 5 MB");
+      if (file.size > 5_000_000) throw new Error(t("备份文件超过 5 MB"));
       const next = validateState(JSON.parse(await file.text()));
-      if (!confirm("恢复备份会替换当前收藏、笔记与记录。确定继续？")) return;
+      if (!confirm(t("恢复备份会替换当前收藏、笔记与记录。确定继续？"))) return;
       setState(next);
-      notify("备份已恢复。");
+      notify(t("备份已恢复。"));
     } catch (e) {
-      notify(e instanceof Error ? e.message : "无法读取备份");
+      notify(e instanceof Error ? e.message : t("无法读取备份"));
     }
   }
   const ids = state.daily[today] ?? dailySelection(today, state),
@@ -403,21 +414,21 @@ export default function App() {
     return (
       <div className="loading">
         <div className="brand-mark">
-          N<span>↗</span>
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" />
         </div>
-        <p>给好奇心留一点空间。</p>
+        <p>{language === "en" ? "Loading…" : "加载中…"}</p>
       </div>
     );
   return (
-    <div className="app-shell">
+    <AssistantProvider><div className="app-shell">
       <header className="app-header">
         <button
           className="brand"
           onClick={() => navigate("today")}
-          aria-label="No More Scrolling 首页"
+          aria-label={t("No More Scrolling 首页")}
         >
           <span className="brand-mark">
-            N<span>↗</span>
+            <img src={`${import.meta.env.BASE_URL}icon.svg`} alt="" />
           </span>
           <span>
             NO MORE
@@ -428,39 +439,27 @@ export default function App() {
         <div className="header-right">
           <span className="edition">VOL. 001</span>
           <button
-            className="icon-button theme-toggle"
-            aria-label="切换深浅色主题"
-            onClick={() =>
-              setState((s) => ({
-                ...s,
-                theme:
-                  document.documentElement.dataset.theme === "dark"
-                    ? "light"
-                    : "dark",
-              }))
-            }
+            className="language-toggle"
+            aria-label={t("切换语言")}
+            onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
           >
-            <Moon size={19} className="light-icon" />
-            <Sun size={19} className="dark-icon" />
+            {language === "zh" ? "EN" : "中文"}
           </button>
+
         </div>
       </header>
       {(warning || offline) && (
         <div className="notice">
-          {warning || "离线模式 · 已缓存的文章、互动与笔记仍可使用。"}
+          {warning ? t(warning) : t("离线模式 · 已缓存的文章、互动与笔记仍可使用。")}
         </div>
       )}
       {updateReady && (
-        <div className="notice">
-          新版本已准备好。
-          <button
+        <div className="notice">{t("新版本已准备好。")}<button
             onClick={async () => {
               const reg = await navigator.serviceWorker.getRegistration();
               reg?.waiting?.postMessage("SKIP_WAITING");
             }}
-          >
-            更新应用
-          </button>
+          >{t("更新应用")}</button>
         </div>
       )}
       <main key={path}>
@@ -475,10 +474,8 @@ export default function App() {
           />
         ) : reader ? (
           <div className="empty">
-            <h1>这篇文章不存在</h1>
-            <button className="primary" onClick={() => navigate("today")}>
-              回到今日
-            </button>
+            <h1>{t("这篇文章不存在")}</h1>
+            <button className="primary" onClick={() => navigate("today")}>{t("回到今日")}</button>
           </div>
         ) : tab === "today" ? (
           <>
@@ -486,7 +483,7 @@ export default function App() {
               <div className="today-date">
                 <span className="live-dot" />
                 {new Date()
-                  .toLocaleDateString("en-US", {
+                  .toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", {
                     weekday: "long",
                     month: "short",
                     day: "numeric",
@@ -494,17 +491,11 @@ export default function App() {
                   .toUpperCase()}
                 <span className="date-rule" />
               </div>
-              <h1>
-                少刷一点。
-                <br />
-                <span>多想一点。</span>
-                <span className="hero-star">✳</span>
+              <h1>{t("少刷一点。")}<br />
+                <span>{t("多想一点。")}</span>
+                <Rickroll />
               </h1>
-              <p>
-                四个问题，四扇通往更大世界的门。
-                <br />
-                今天，你想推开哪一扇？
-              </p>
+
             </section>
             <div className="daily-check">
               <div
@@ -518,8 +509,7 @@ export default function App() {
                 <Clock size={19} />
               </div>
               <div>
-                <strong>
-                  今日探索{" "}
+                <strong>{t("今日探索")}{" "}
                   <span>
                     {minutes}
                     <small> / {state.goal} min</small>
@@ -527,21 +517,20 @@ export default function App() {
                 </strong>
                 <p>
                   {minutes >= state.goal
-                    ? "今天已经走得很远了，随时可以停下。"
-                    : "留一点时间，给真正让你好奇的事。"}
+                    ? (language === "en" ? "Daily goal reached." : "已完成今日目标。")
+                    : (language === "en" ? "Reading time today." : "今日累计阅读时间。")}
                 </p>
               </div>
               <button
                 className="icon-button"
-                aria-label={tracking ? "暂停探索计时" : "继续探索计时"}
+                aria-label={tracking ? t("暂停探索计时") : t("继续探索计时")}
                 onClick={() => setTracking((t) => !t)}
               >
                 {tracking ? <Pause size={16} /> : <Play size={16} />}
               </button>
             </div>
             <div className="section-heading">
-              <h2>
-                今日四选 <span>DAILY PICKS</span>
+              <h2>{t("今日四选")}<span>DAILY PICKS</span>
               </h2>
               <span className="count">{done} / 4</span>
             </div>
@@ -556,30 +545,22 @@ export default function App() {
                 />
               ))}
             </div>
-            <div className="finite-footer">
-              <span>✳</span>
-              <p>
-                今天的推荐到这里。
-                <br />
-                <small>没有下一屏，只有下一个好问题。</small>
-              </p>
-            </div>
+            <p className="hint">{language === "en" ? "End of today’s picks." : "今日推荐已结束。"}</p>
             <button
               className="graph-teaser"
               onClick={() => navigate("explore")}
             >
               <div>
                 <span className="eyebrow">FOLLOW THE CONNECTIONS</span>
-                <h3>让知识连成自己的宇宙。</h3>
+                <h3>{language === "en" ? "Knowledge graph" : "知识图谱"}</h3>
                 <p>
-                  {concepts.length} 个概念 · {state.edges.length} 条个人关联
-                </p>
+                  {concepts.length} {t("个概念 ·")} {state.edges.length} {t("条个人关联")}</p>
               </div>
               <Link2 size={26} />
               <ArrowRight size={20} />
             </button>
             <details className="library-browser">
-              <summary>浏览全部 {articles.length} 篇精选内容</summary>
+              <summary>{t("浏览全部")} {articles.length} {t("篇精选内容")}</summary>
               {articles.map((a) => (
                 <button
                   key={a.id}
@@ -589,17 +570,14 @@ export default function App() {
                   <span>
                     {a.title}
                     <small>
-                      {SUBJECTS[a.subject].name} · {a.minutes} MIN
+                      {t(SUBJECTS[a.subject].name)} · {a.minutes} MIN
                     </small>
                   </span>
                   <ArrowUpRight size={18} />
                 </button>
               ))}
             </details>
-            <p className="tiny-note">
-              每天按本地日期选取。首批 8
-              篇轮换，旧篇会重现；全新内容随版本发布。
-            </p>
+            <p className="tiny-note">{t("每天按本地日期选取。首批 8 篇轮换，旧篇会重现；全新内容随版本发布。")}</p>
           </>
         ) : tab === "explore" ? (
           <Graph
@@ -609,48 +587,22 @@ export default function App() {
             selected={selected}
             setSelected={setSelected}
           />
-        ) : tab === "saved" ? (
+        ) : tab === "world" ? <World /> : tab === "saved" ? (
           <Collection
             state={state}
             open={open}
             concept={focusConcept}
             toggleSave={toggleSave}
           />
-        ) : (
+        ) : tab === "you" ? <Profile state={state} update={update} /> : (
           <>
             <div className="page-heading">
-              <span className="eyebrow">A LITTLE SPACE FOR YOUR MIND</span>
-              <h1>按自己的节奏。</h1>
-              <p>让兴趣带路，给理解留时间。</p>
+              <a className="text-button" href="#/you">← {language === "en" ? "Profile" : "个人资料"}</a><h1>{language === "en" ? "Settings" : "设置"}</h1>
             </div>
-            <div className="stats-grid">
-              <div>
-                <strong>
-                  {minutes}
-                  <small> min</small>
-                </strong>
-                <span>今日探索</span>
-              </div>
-              <div>
-                <strong>
-                  {
-                    Object.values(state.progress).filter((p) => p.complete)
-                      .length
-                  }
-                </strong>
-                <span>完成的发现</span>
-              </div>
-              <div>
-                <strong>{state.saved.length}</strong>
-                <span>保存的知识</span>
-              </div>
-            </div>
+            <AssistantSettings /><SummarySettings />
             <section className="settings-section">
               <h2>Daily time check</h2>
-              <p>
-                仅在阅读和图谱页面记录，锁屏或后台暂停；60
-                秒无操作后暂停。时间是近似记录。
-              </p>
+              <p>{t("仅在阅读和图谱页面记录，锁屏或后台暂停；60 秒无操作后暂停。时间是近似记录。")}</p>
               <div className="segmented">
                 {[5, 10, 15].map((g) => (
                   <button
@@ -658,8 +610,7 @@ export default function App() {
                     className={state.goal === g ? "active" : ""}
                     onClick={() => setState((s) => ({ ...s, goal: g }))}
                   >
-                    {g} 分钟
-                  </button>
+                    {g} {t("分钟")}</button>
                 ))}
               </div>
               <div className="week-bars">
@@ -676,8 +627,7 @@ export default function App() {
                       />
                       <small>
                         {date
-                          .toLocaleDateString("zh-CN", { weekday: "short" })
-                          .replace("周", "")}
+                          .toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", { weekday: "short" })}
                       </small>
                     </div>
                   );
@@ -688,14 +638,12 @@ export default function App() {
                 onClick={() => setTracking((v) => !v)}
               >
                 {tracking ? <Pause size={16} /> : <Play size={16} />}{" "}
-                {tracking ? "暂停计时" : "继续计时"}
+                {tracking ? t("暂停计时") : t("继续计时")}
               </button>
             </section>
             <section className="settings-section">
-              <h2>兴趣与深度</h2>
-              <p>
-                偏好科目会排在首页前面，每天仍保留四科学科入口。内容选择设置次日生效。
-              </p>
+              <h2>{t("兴趣与深度")}</h2>
+              <p>{t("偏好科目会排在首页前面，每天仍保留四科学科入口。内容选择设置次日生效。")}</p>
               <div className="filter-row">
                 {Object.entries(SUBJECTS).map(([key, v]) => (
                   <button
@@ -714,13 +662,11 @@ export default function App() {
                       }))
                     }
                   >
-                    {v.symbol} {v.name}
+                    {v.symbol} {t(v.name)}
                   </button>
                 ))}
               </div>
-              <label className="field-label">
-                数学 / CS 深度
-                <select
+              <label className="field-label">{t("数学 / CS 深度")}<select
                   value={state.difficulty}
                   onChange={(e) =>
                     setState((s) => ({
@@ -729,32 +675,36 @@ export default function App() {
                     }))
                   }
                 >
-                  <option value="2">Core · 本科基础之上的探索</option>
-                  <option value="3">Deep · 更重证明与抽象结构</option>
+                  <option value="2">{t("Core · 本科基础之上的探索")}</option>
+                  <option value="3">{t("Deep · 更重证明与抽象结构")}</option>
                 </select>
               </label>
-              <label className="field-label">
-                最近对什么感兴趣？
-                <textarea
+              <label className="field-label">{t("最近对什么感兴趣？")}<textarea
                   value={state.interests}
                   maxLength={2000}
                   onChange={(e) =>
                     setState((s) => ({ ...s, interests: e.target.value }))
                   }
-                  placeholder="Galois theory, distributed systems, 政治经济学…"
+                  placeholder={t("Galois theory, distributed systems, 政治经济学…")}
                 />
               </label>
-              <p className="hint">
-                关键词会参与本地选题；仅能匹配已有内容，不会自动生成新文章或读取聊天记录。
-              </p>
+              <p className="hint">{t("关键词会参与本地选题；仅能匹配已有内容，不会自动生成新文章或读取聊天记录。")}</p>
             </section>
             <section className="settings-section">
-              <h2>外观</h2>
+              <h2>{t("语言 / Language")}</h2>
+              <div className="segmented" aria-label={t("选择语言")}>
+                <button className={language === "zh" ? "active" : ""} aria-pressed={language === "zh"} onClick={() => setLanguage("zh")}>中文</button>
+                <button className={language === "en" ? "active" : ""} aria-pressed={language === "en"} onClick={() => setLanguage("en")}>English</button>
+              </div>
+              <p>{t("界面、文章和互动支持中英文切换，公式保持一致。笔记与个人关联保留你的原文。")}</p>
+            </section>
+            <section className="settings-section">
+              <h2>{t("外观")}</h2>
               <div className="segmented">
                 {[
-                  ["dark", "深色"],
-                  ["light", "浅色"],
-                  ["system", "跟随系统"],
+                  ["dark", t("深色")],
+                  ["light", t("浅色")],
+                  ["system", t("跟随系统")],
                 ].map(([key, label]) => (
                   <button
                     key={key}
@@ -767,28 +717,18 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <p>
-                中文叙事 · English terminology · KaTeX
-                数学排版。完整英文内容将在后续加入。
-              </p>
             </section>
             <section className="settings-section">
-              <h2>你的数据，在你手里。</h2>
-              <p>
-                收藏、笔记、连线与记录保存在这台设备的浏览器中，不会上传。清理网站数据或更换设备前，请导出备份。
-              </p>
+              <h2>{t("你的数据，在你手里。")}</h2>
+              <p>{t("收藏、笔记、连线与记录保存在这台设备的浏览器中，不会上传。清理网站数据或更换设备前，请导出备份。")}</p>
               <div className="button-row">
                 <button className="secondary" onClick={exportBackup}>
-                  <Download size={17} />
-                  导出备份
-                </button>
+                  <Download size={17} />{t("导出备份")}</button>
                 <button
                   className="secondary"
                   onClick={() => fileInput.current?.click()}
                 >
-                  <Upload size={17} />
-                  恢复备份
-                </button>
+                  <Upload size={17} />{t("恢复备份")}</button>
               </div>
               <input
                 ref={fileInput}
@@ -803,24 +743,19 @@ export default function App() {
               />
             </section>
             <section className="settings-section">
-              <h2>在 iPhone 上使用</h2>
+              <h2>{t("在 iPhone 上使用")}</h2>
               <ol>
-                <li>用 Safari 打开本应用的网址。</li>
-                <li>点“分享”，选择“添加到主屏幕”。</li>
-                <li>如果出现“作为 Web App 打开”，保持开启。</li>
-                <li>
-                  首次联网打开后，等页面加载完毕，再用飞行模式测试离线阅读。
-                </li>
+                <li>{t("用 Safari 打开本应用的网址。")}</li>
+                <li>{t("点“分享”，选择“添加到主屏幕”。")}</li>
+                <li>{t("如果出现“作为 Web App 打开”，保持开启。")}</li>
+                <li>{t("首次联网打开后，等页面加载完毕，再用飞行模式测试离线阅读。")}</li>
               </ol>
-              <p className="hint">
-                Safari 与主屏幕应用的存储环境可能不同；若未看到原记录，可用导出
-                / 恢复迁移。外部来源链接需要联网。
-              </p>
+              <p className="hint">{t("Safari 与主屏幕应用的存储环境可能不同；若未看到原记录，可用导出 / 恢复迁移。外部来源链接需要联网。")}</p>
               <button
                 className="secondary"
                 onClick={async () => {
                   if (!("serviceWorker" in navigator)) {
-                    notify("当前浏览器不支持离线更新。");
+                    notify(t("当前浏览器不支持离线更新。"));
                     return;
                   }
                   try {
@@ -829,18 +764,16 @@ export default function App() {
                       await r.update();
                       notify(
                         r.waiting
-                          ? "已有更新，点击顶部更新应用。"
-                          : "已检查版本；若有更新会在顶部提示。",
+                          ? t("已有更新，点击顶部更新应用。")
+                          : t("已检查版本；若有更新会在顶部提示。"),
                       );
-                    } else notify("离线组件尚未就绪，请联网重新打开。");
+                    } else notify(t("离线组件尚未就绪，请联网重新打开。"));
                   } catch {
-                    notify("检查失败，请联网后重试。");
+                    notify(t("检查失败，请联网后重试。"));
                   }
                 }}
               >
-                <ArrowDownToLine size={17} />
-                检查应用更新
-              </button>
+                <ArrowDownToLine size={17} />{t("检查应用更新")}</button>
             </section>
             <footer className="about-footer">
               NO MORE SCROLLING · v0.1.0
@@ -849,36 +782,39 @@ export default function App() {
                 href="https://github.com/Cometgerms/No-More-Scrolling"
                 target="_blank"
                 rel="noreferrer"
-              >
-                查看开源项目 ↗
-              </a>
-              <p>探索有边界，好奇心没有。</p>
+              >{t("查看开源项目 ↗")}</a>
+
             </footer>
           </>
         )}
       </main>
-      <nav className="bottom-nav" aria-label="主导航">
+      <Assistant page={article ? {
+        id: path,
+        title: `${article.title} · ${(state.progress[article.id]?.section ?? 0) + 1}/${article.sections.length}`,
+        text: JSON.stringify({ title: article.title, section: article.sections[state.progress[article.id]?.section ?? 0], lab: (state.progress[article.id]?.section ?? 0) === 2 ? article.labIntro : undefined, sources: article.sources }),
+      } : { id: tab, title: language === "en" ? (navItems.find(n => n.id === tab)?.en ?? "Page") : (navItems.find(n => n.id === tab)?.label ?? "页面"), text: tab === "explore" ? JSON.stringify(concepts.find(c => c.id === selected)) ?? "" : tab === "today" ? daily.map(a => `${a.title}: ${a.question}`).join("\n") : "" }} />
+      <nav className="bottom-nav" aria-label={t("主导航")}>
         {navItems.map(({ id, label, en, icon: Icon }) => (
           <button
             key={id}
-            aria-current={tab === id ? "page" : undefined}
-            className={tab === id ? "active" : ""}
+            aria-current={tab === id || (tab === "settings" && id === "you") ? "page" : undefined}
+            className={tab === id || (tab === "settings" && id === "you") ? "active" : ""}
             onClick={() => navigate(id)}
           >
             <Icon size={21} />
             <span>
-              {label}
-              <small>{en}</small>
+              {t(label)}
+              {language === "zh" && <small>{en}</small>}
             </span>
           </button>
         ))}
       </nav>
       {toast && (
         <div className="toast" role="status">
-          {toast}
+          {t(toast)}
         </div>
       )}
-    </div>
+    </div></AssistantProvider>
   );
 }
 function Reader({
@@ -896,6 +832,9 @@ function Reader({
   concept: (id: string) => void;
   open: (id: string) => void;
 }) {
+  const { t, language } = useLanguage();
+  const { articles, concepts } = useContent();
+
   const progress = state.progress[a.id] ?? { section: 0, complete: false };
   const section = progress.section,
     last = section === a.sections.length - 1;
@@ -920,11 +859,10 @@ function Reader({
     >
       <div className="reader-toolbar">
         <button className="text-button" onClick={() => navigate("today")}>
-          <ArrowLeft size={17} /> 返回探索
-        </button>
+          <ArrowLeft size={17} />{t("返回探索")}</button>
         <button
           className={`icon-button ${state.saved.includes(a.id) ? "selected" : ""}`}
-          aria-label={state.saved.includes(a.id) ? "取消收藏文章" : "收藏文章"}
+          aria-label={state.saved.includes(a.id) ? t("取消收藏文章") : t("收藏文章")}
           onClick={() => toggleSave(a.id)}
         >
           <Bookmark
@@ -938,7 +876,7 @@ function Reader({
           <button
             key={s.title}
             className={i <= section ? "done" : ""}
-            aria-label={`跳至第${i + 1}节：${s.title}`}
+            aria-label={t("跳至第{0}节：{1}", i + 1, s.title)}
             aria-current={i === section ? "step" : undefined}
             onClick={() => move(i)}
           />
@@ -966,16 +904,13 @@ function Reader({
         <>
           <Art kind={a.subject} large />
           <details className="prerequisites">
-            <summary>前置知识 · {a.prerequisites.join(" / ")}</summary>
-            <p>
-              默认已接触 {a.prerequisites.join(" 与 ")}
-              。遇到不熟悉的概念，可以点击文末关联节点，查看概念说明与相关文章。
-            </p>
+            <summary>{t("前置知识 ·")} {a.prerequisites.join(" / ")}</summary>
+            <p>{t("默认已接触")} {a.prerequisites.join(` ${t("与")} `)}{t("。遇到不熟悉的概念，可以点击文末关联节点，查看概念说明与相关文章。")}</p>
           </details>
         </>
       )}
-      <Prose section={a.sections[section]} />
-      {section === 2 && <Lab key={a.id} article={a} />}
+      <div data-chat-fragment><Prose key={`${a.id}-${section}`} section={a.sections[section]} />
+      {section === 2 && <Lab key={a.id} article={a} />}</div>
       {last && (
         <>
           <button
@@ -985,16 +920,16 @@ function Reader({
           >
             <span>
               <FlaskConical size={20} />
-              {deep ? "收起深入解释" : "再往深处走一步"}
+              {deep ? t("收起深入解释") : t("再往深处走一步")}
               <small>OPTIONAL DEEPER DIVE</small>
             </span>
             <span>{deep ? "−" : "+"}</span>
           </button>
-          {deep && <Prose section={a.deep} />}
+          {deep && <div data-chat-fragment><Prose section={a.deep} /></div>}
           <section className="quiz">
             <span className="eyebrow">CHECK YOUR INTUITION</span>
-            <h2>把这个想法带走。</h2>
-            <p>{a.quiz.question}</p>
+            <h2>{t("把这个想法带走。")}</h2>
+            <p><RichText value={a.quiz.question} /></p>
             <div className="choices">
               {a.quiz.options.map((option, i) => (
                 <button
@@ -1009,7 +944,7 @@ function Reader({
                   onClick={() => answer(i)}
                 >
                   <span>{String.fromCharCode(65 + i)}</span>
-                  {option}
+                  <span className="choice-copy"><RichText value={option} /></span>
                   {progress.answer === i && i === a.quiz.answer && (
                     <Check size={17} />
                   )}
@@ -1018,13 +953,11 @@ function Reader({
             </div>
             {progress.answer !== undefined && (
               <p className="result" role="status">
-                {a.quiz.explanations[progress.answer]}
+                <RichText value={a.quiz.explanations[progress.answer]} />
               </p>
             )}
           </section>
-          <label className="field-label article-note">
-            留给未来的自己
-            <textarea
+          <label className="field-label article-note">{t("留给未来的自己")}<textarea
               value={state.notes[a.id] ?? ""}
               maxLength={20000}
               onChange={(e) =>
@@ -1033,18 +966,18 @@ function Reader({
                   notes: { ...s.notes, [a.id]: e.target.value },
                 }))
               }
-              placeholder="哪个瞬间让你理解了？还有什么疑问？"
+              placeholder={t("哪个瞬间让你理解了？还有什么疑问？")}
             />
           </label>
           <div className="feedback">
-            <span className="eyebrow">这次探索怎么样？</span>
+            <span className="eyebrow">{t("这次探索怎么样？")}</span>
             <div className="filter-row">
               {(
                 [
-                  ["interesting", "有意思"],
-                  ["basic", "太基础"],
-                  ["hard", "太难"],
-                  ["skip", "不感兴趣"],
+                  ["interesting", t("有意思")],
+                  ["basic", t("太基础")],
+                  ["hard", t("太难")],
+                  ["skip", t("不感兴趣")],
                 ] as [Feedback, string][]
               ).map(([key, label]) => (
                 <button
@@ -1067,18 +1000,18 @@ function Reader({
             {progress.feedback && (
               <p className="hint">
                 {progress.feedback === "skip"
-                  ? "会降低这篇文章在后续选题中的优先级。"
+                  ? t("会降低这篇文章在后续选题中的优先级。")
                   : progress.feedback === "basic"
-                    ? "已记录。可在“我的”中将深度调为 Deep。"
+                    ? t("已记录。可在“我的”中将深度调为 Deep。")
                     : progress.feedback === "hard"
-                      ? "已记录。可以先探索前置概念，或将深度调为 Core。"
-                      : "已记录这份兴趣。关联概念在下面，继续沿着它探索。"}
+                      ? t("已记录。可以先探索前置概念，或将深度调为 Core。")
+                      : t("已记录这份兴趣。关联概念在下面，继续沿着它探索。")}
               </p>
             )}
           </div>
           <section className="reader-concepts">
             <span className="eyebrow">CONNECT THE DOTS</span>
-            <h2>故事，还能往这里走。</h2>
+            <h2>{t("故事，还能往这里走。")}</h2>
             {a.concepts.map((id) => {
               const node = concepts.find((c) => c.id === id)!;
               return (
@@ -1086,13 +1019,13 @@ function Reader({
                   <button onClick={() => concept(id)}>
                     <span>
                       {node.name}
-                      <small>{node.zh}</small>
+                      {language === "zh" && <small>{node.zh}</small>}
                     </span>
                     <ArrowUpRight size={17} />
                   </button>
                   <button
                     className={`icon-button ${state.saved.includes(id) ? "selected" : ""}`}
-                    aria-label={`收藏 ${node.name}`}
+                    aria-label={t("收藏 {0}", node.name)}
                     onClick={() => toggleSave(id)}
                   >
                     <Bookmark
@@ -1105,14 +1038,13 @@ function Reader({
             })}
           </section>
           <details className="sources">
-            <summary>Sources & verification · 来源与核验</summary>
+            <summary>{t("Sources & verification · 来源与核验")}</summary>
             <p>
               {a.contentType === "theorem"
-                ? "数学 / 形式论证"
+                ? t("数学 / 形式论证")
                 : a.contentType === "formal-model"
-                  ? "理论模型，非现实民调"
-                  : "历史事实与分析已在正文区分"}{" "}
-              · 发布 {a.publishedAt} · 核对 {a.verifiedAt}
+                  ? t("理论模型，非现实民调")
+                  : t("历史事实与分析已在正文区分")}{" "}{t("· 发布")} {a.publishedAt} {t("· 核对")} {a.verifiedAt}
             </p>
             <p>{a.verification}</p>
             {a.sources.map((source) => (
@@ -1138,13 +1070,13 @@ function Reader({
             }}
           >
             {progress.complete
-              ? "回到今日探索"
+              ? t("回到今日探索")
               : progress.answer === undefined
-                ? "结束探索 · 暂时跳过题目"
-                : "完成这次探索"}
+                ? t("结束探索 · 暂时跳过题目")
+                : t("完成这次探索")}
             <Check size={18} />
           </button>
-          <p className="hint center">完成表示已探索，不代表已掌握。</p>
+          <p className="hint center">{t("完成表示已探索，不代表已掌握。")}</p>
         </>
       )}
       <div className="reader-navigation">
@@ -1153,12 +1085,9 @@ function Reader({
           disabled={section === 0}
           onClick={() => move(section - 1)}
         >
-          <ArrowLeft size={17} />
-          上一节
-        </button>
+          <ArrowLeft size={17} />{t("上一节")}</button>
         {!last ? (
-          <button className="primary" onClick={() => move(section + 1)}>
-            继续故事 <ArrowRight size={17} />
+          <button className="primary" onClick={() => move(section + 1)}>{t("继续故事")}<ArrowRight size={17} />
           </button>
         ) : (
           <button
@@ -1169,8 +1098,7 @@ function Reader({
                   .id,
               )
             }
-          >
-            同科下一篇 <ArrowUpRight size={17} />
+          >{t("同科下一篇")}<ArrowUpRight size={17} />
           </button>
         )}
       </div>
@@ -1188,6 +1116,9 @@ function Collection({
   concept: (id: string) => void;
   toggleSave: (id: string) => void;
 }) {
+  const { t, language } = useLanguage();
+  const { articles, concepts } = useContent();
+
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("all");
   const savedArticles = articles.filter(
@@ -1206,27 +1137,23 @@ function Collection({
     <>
       <div className="page-heading">
         <span className="eyebrow">THINGS WORTH KEEPING</span>
-        <h1>
-          留住那些
-          <br />
-          “原来如此”。
-        </h1>
-        <p>收藏与笔记，让探索留下自己的形状。</p>
+        <h1>{language === "en" ? "Collection" : "收藏"}</h1>
+
       </div>
       <div className="search">
         <Search size={18} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          aria-label="搜索收藏"
-          placeholder="搜索收藏的文章与概念…"
+          aria-label={t("搜索收藏")}
+          placeholder={t("搜索收藏的文章与概念…")}
         />
       </div>
       <div className="filter-row">
         {[
-          ["all", "全部"],
-          ["articles", "文章"],
-          ["concepts", "知识点"],
+          ["all", t("全部")],
+          ["articles", t("文章")],
+          ["concepts", t("知识点")],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -1240,12 +1167,9 @@ function Collection({
       {savedArticles.length === 0 && savedConcepts.length === 0 ? (
         <div className="empty">
           <Bookmark size={36} />
-          <h2>收藏第一个好问题。</h2>
-          <p>
-            文章和图谱里的书签，会把发现保存在这里。写过笔记的内容也会出现。
-          </p>
-          <button className="primary" onClick={() => navigate("today")}>
-            开始今天的探索 <ArrowRight size={17} />
+          <h2>{t("收藏第一个好问题。")}</h2>
+          <p>{t("文章和图谱里的书签，会把发现保存在这里。写过笔记的内容也会出现。")}</p>
+          <button className="primary" onClick={() => navigate("today")}>{t("开始今天的探索")}<ArrowRight size={17} />
           </button>
         </div>
       ) : (
@@ -1262,7 +1186,7 @@ function Collection({
                 </button>
                 <button
                   className="icon-button"
-                  aria-label={`切换收藏 ${a.title}`}
+                  aria-label={t("切换收藏 {0}", a.title)}
                   onClick={() => toggleSave(a.id)}
                 >
                   <Bookmark
@@ -1282,7 +1206,7 @@ function Collection({
                 </button>
                 <button
                   className="icon-button"
-                  aria-label={`切换收藏 ${c.name}`}
+                  aria-label={t("切换收藏 {0}", c.name)}
                   onClick={() => toggleSave(c.id)}
                 >
                   <Bookmark

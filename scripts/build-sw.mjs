@@ -10,7 +10,7 @@ async function walk(dir) {
     )
   ).flat();
 }
-const files = (await walk("dist")).filter((f) => !f.endsWith("/sw.js"));
+const files = (await walk("dist")).filter((f) => !f.endsWith("/sw.js") && !f.endsWith("/world-feed.json"));
 const hash = createHash("sha256");
 for (const file of files.sort()) hash.update(await readFile(file));
 const version = `nms-${hash.digest("hex").slice(0, 12)}`;

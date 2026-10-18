@@ -1,3 +1,4 @@
+import { useLanguage, useContent } from "./i18n";
 import { useRef, useState } from "react";
 import {
   Bookmark,
@@ -8,7 +9,6 @@ import {
   Search,
   Link2,
 } from "lucide-react";
-import { concepts, edges, articles } from "./content";
 import { SUBJECTS, type State, type Subject } from "./model";
 const positions: Record<string, [number, number]> = {
   measure: [160, 90],
@@ -39,6 +39,9 @@ export function Graph({
   selected: string;
   setSelected: (id: string) => void;
 }) {
+  const { t, language } = useLanguage();
+  const { concepts, edges, articles } = useContent();
+
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState<Subject | "all">("all"),
     [savedOnly, setSavedOnly] = useState(false),
@@ -76,56 +79,48 @@ export function Graph({
     <>
       <div className="page-heading">
         <span className="eyebrow">YOUR CONNECTED MIND</span>
-        <h1>
-          让好奇心，
-          <br />
-          有迹可循。
-        </h1>
-        <p>每一条连线，都是一个新的为什么。</p>
+        <h1>{language === "en" ? "Knowledge graph" : "知识图谱"}</h1>
+        <p>{t("每一条连线，都是一个新的为什么。")}</p>
       </div>
       <div className="search">
         <Search size={18} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="搜索概念 · measure, 投票…"
-          aria-label="搜索知识图谱"
+          placeholder={t("搜索概念 · measure, 投票…")}
+          aria-label={t("搜索知识图谱")}
         />
       </div>
       <div className="filter-row">
         <button
           className={filter === "all" ? "chip active" : "chip"}
           onClick={() => setFilter("all")}
-        >
-          全部
-        </button>
+        >{t("全部")}</button>
         {Object.entries(SUBJECTS).map(([key, s]) => (
           <button
             key={key}
             className={filter === key ? "chip active" : "chip"}
             onClick={() => setFilter(key as Subject)}
           >
-            {s.name}
+            {t(s.name)}
           </button>
         ))}
         <button
           className={savedOnly ? "chip active" : "chip"}
           onClick={() => setSavedOnly((v) => !v)}
-        >
-          已收藏
-        </button>
+        >{t("已收藏")}</button>
       </div>
       <div className="graph-panel">
         <div className="graph-caption">
           <span>{filtered.length} CONCEPTS</span>
-          <span>拖动画布 · 点选节点</span>
+          <span>{t("拖动画布 · 点选节点")}</span>
         </div>
         <svg
           ref={svg}
           viewBox="0 0 580 900"
           className="graph"
           role="group"
-          aria-label="互动知识图谱"
+          aria-label={t("互动知识图谱")}
           onPointerDown={(e) => {
             if ((e.target as Element).closest("[data-node]")) return;
             drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
@@ -236,7 +231,7 @@ export function Graph({
                     fontSize="13"
                     fill="var(--muted)"
                   >
-                    {c.zh}
+                    {language === "zh" ? c.zh : ""}
                     {state.saved.includes(c.id) ? " · ★" : ""}
                   </text>
                 </g>
@@ -247,7 +242,7 @@ export function Graph({
         <div className="graph-tools">
           <button
             className="icon-button"
-            aria-label="放大图谱"
+            aria-label={t("放大图谱")}
             disabled={zoom >= 2}
             onClick={() => setZoom((z) => Math.min(2, z + 0.2))}
           >
@@ -255,7 +250,7 @@ export function Graph({
           </button>
           <button
             className="icon-button"
-            aria-label="缩小图谱"
+            aria-label={t("缩小图谱")}
             disabled={zoom <= 0.6}
             onClick={() => setZoom((z) => Math.max(0.6, z - 0.2))}
           >
@@ -263,7 +258,7 @@ export function Graph({
           </button>
           <button
             className="icon-button"
-            aria-label="重置图谱视角"
+            aria-label={t("重置图谱视角")}
             onClick={() => {
               setZoom(1);
               setPan({ x: 0, y: 0 });
@@ -273,7 +268,7 @@ export function Graph({
           </button>
         </div>
       </div>
-      <div className="concept-picker" aria-label="概念列表">
+      <div className="concept-picker" aria-label={t("概念列表")}>
         {filtered.map((c) => (
           <button
             key={c.id}
@@ -284,7 +279,7 @@ export function Graph({
           </button>
         ))}
         {filtered.length === 0 && (
-          <p className="hint">没有匹配的概念。试试清除筛选或收藏一个知识点。</p>
+          <p className="hint">{t("没有匹配的概念。试试清除筛选或收藏一个知识点。")}</p>
         )}
       </div>
       <section
@@ -298,7 +293,7 @@ export function Graph({
           <button
             className={`icon-button ${state.saved.includes(focus.id) ? "selected" : ""}`}
             aria-label={
-              state.saved.includes(focus.id) ? "取消收藏概念" : "收藏概念"
+              state.saved.includes(focus.id) ? t("取消收藏概念") : t("收藏概念")
             }
             onClick={() =>
               update((s) => ({
@@ -317,9 +312,7 @@ export function Graph({
         </div>
         <h2>{focus.name}</h2>
         <p>{focus.description}</p>
-        <label className="field-label">
-          我的理解
-          <textarea
+        <label className="field-label">{t("我的理解")}<textarea
             value={state.notes[focus.id] ?? ""}
             maxLength={20000}
             onChange={(e) =>
@@ -328,7 +321,7 @@ export function Graph({
                 notes: { ...s.notes, [focus.id]: e.target.value },
               }))
             }
-            placeholder="用自己的话，把这个概念留下来…"
+            placeholder={t("用自己的话，把这个概念留下来…")}
           />
         </label>
         <div className="related-edges">
@@ -340,7 +333,7 @@ export function Graph({
                 <div className="edge-row" key={i}>
                   <button onClick={() => choose(other)}>
                     <span>
-                      {e.personal ? "个人关联" : "概念关系"} · {e.label}
+                      {e.personal ? t("个人关联") : t("概念关系")} · {e.label}
                     </span>
                     <strong>
                       {concepts.find((c) => c.id === other)?.name}{" "}
@@ -350,23 +343,21 @@ export function Graph({
                   {e.personal && (
                     <button
                       className="text-button"
-                      aria-label={`删除与 ${other} 的个人关联`}
+                      aria-label={t("删除与 {0} 的个人关联", other)}
                       onClick={() =>
                         update((s) => ({
                           ...s,
                           edges: s.edges.filter((x) => x !== e),
                         }))
                       }
-                    >
-                      删除
-                    </button>
+                    >{t("删除")}</button>
                   )}
                 </div>
               );
             })}
         </div>
         <button className="secondary" onClick={() => setLinking((v) => !v)}>
-          <Link2 size={17} /> {linking ? "收起关联编辑" : "添加我的关联"}
+          <Link2 size={17} /> {linking ? t("收起关联编辑") : t("添加我的关联")}
         </button>
         {linking && (
           <form
@@ -391,14 +382,12 @@ export function Graph({
               setLabel("");
             }}
           >
-            <label>
-              连接到
-              <select
+            <label>{t("连接到")}<select
                 value={target}
                 required
                 onChange={(e) => setTarget(e.target.value)}
               >
-                <option value="">选择一个概念</option>
+                <option value="">{t("选择一个概念")}</option>
                 {concepts
                   .filter((c) => c.id !== focus.id)
                   .map((c) => (
@@ -408,22 +397,18 @@ export function Graph({
                   ))}
               </select>
             </label>
-            <label>
-              它们怎样关联？
-              <input
+            <label>{t("它们怎样关联？")}<input
                 required
                 maxLength={300}
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                placeholder="例如：它们用了同一种反证思路"
+                placeholder={t("例如：它们用了同一种反证思路")}
               />
             </label>
-            <button className="primary small" type="submit">
-              保存个人关联
-            </button>
+            <button className="primary small" type="submit">{t("保存个人关联")}</button>
           </form>
         )}
-        <h3>沿着这个概念探索</h3>
+        <h3>{t("沿着这个概念探索")}</h3>
         {articles
           .filter((a) => a.concepts.includes(focus.id))
           .map((a) => (
@@ -435,7 +420,7 @@ export function Graph({
               <span>
                 {a.title}
                 <small>
-                  {a.minutes} MIN · {SUBJECTS[a.subject].name}
+                  {a.minutes} MIN · {t(SUBJECTS[a.subject].name)}
                 </small>
               </span>
               <ArrowUpRight size={20} />

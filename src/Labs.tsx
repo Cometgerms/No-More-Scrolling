@@ -1,3 +1,4 @@
+import { useLanguage } from "./i18n";
 import { useEffect, useState } from "react";
 import { Play, RotateCcw, ChevronRight, Pause } from "lucide-react";
 import {
@@ -9,18 +10,20 @@ import {
 import { MathText } from "./Math";
 import type { Article } from "./model";
 function Measure() {
+  const { t } = useLanguage();
+
   const [width, setWidth] = useState(35);
   return (
     <>
       <div className="lab-value">
-        <span>区间 [0, b]</span>
+        <span>{t("区间 [0, b]")}</span>
         <strong>b = {(width / 100).toFixed(2)}</strong>
       </div>
       <svg
         viewBox="0 0 360 170"
         className="lab-svg"
         role="img"
-        aria-label={`均匀分布密度为1，选中区间概率为${width / 100}`}
+        aria-label={t("均匀分布密度为1，选中区间概率为{0}", width / 100)}
       >
         <defs>
           <pattern
@@ -69,10 +72,8 @@ function Measure() {
         </text>
         <circle cx="180" cy="130" r="4" fill="var(--text)" />
       </svg>
-      <label className="slider-label">
-        拖动区间右端点
-        <input
-          aria-label="区间右端点"
+      <label className="slider-label">{t("拖动区间右端点")}<input
+          aria-label={t("区间右端点")}
           type="range"
           min="0"
           max="100"
@@ -83,13 +84,13 @@ function Measure() {
       <MathText
         value={`\\mathbb P(0\\le X\\le ${width / 100})=${width / 100}`}
       />
-      <p className="hint">
-        白点标记 x=0.5，它的概率始终为 0。着色面积表示区间概率。
-      </p>
+      <p className="hint">{t("白点标记 x=0.5，它的概率始终为 0。着色面积表示区间概率。")}</p>
     </>
   );
 }
 function Cantor() {
+  const { t } = useLanguage();
+
   const [level, setLevel] = useState(0),
     [playing, setPlaying] = useState(false);
   useEffect(() => {
@@ -111,13 +112,13 @@ function Cantor() {
     <>
       <div className="lab-value">
         <span>ITERATION {level}</span>
-        <strong>{2 ** level} 个区间</strong>
+        <strong>{2 ** level} {t("个区间")}</strong>
       </div>
       <svg
         className="lab-svg"
         viewBox="0 0 360 190"
         role="img"
-        aria-label={`Cantor set 第${level}级近似`}
+        aria-label={t("Cantor set 第{0}级近似", level)}
       >
         {Array.from({ length: level + 1 }, (_, i) => (
           <g key={i}>
@@ -147,12 +148,11 @@ function Cantor() {
           className="primary small"
           disabled={level === 6}
           onClick={() => setLevel((n) => n + 1)}
-        >
-          删去中间部分 <ChevronRight size={16} />
+        >{t("删去中间部分")}<ChevronRight size={16} />
         </button>
         <button
           className="icon-button"
-          aria-label={playing ? "暂停动画" : "播放动画"}
+          aria-label={playing ? t("暂停动画") : t("播放动画")}
           disabled={level === 6 && !playing}
           onClick={() => setPlaying((v) => !v)}
         >
@@ -160,7 +160,7 @@ function Cantor() {
         </button>
         <button
           className="icon-button"
-          aria-label="重置 Cantor 实验"
+          aria-label={t("重置 Cantor 实验")}
           onClick={() => {
             setLevel(0);
             setPlaying(false);
@@ -169,13 +169,13 @@ function Cantor() {
           <RotateCcw size={18} />
         </button>
       </div>
-      <p className="hint">
-        动画止于第 6 步。每个有限步骤都有正长度，极限才是 0。
-      </p>
+      <p className="hint">{t("动画止于第 6 步。每个有限步骤都有正长度，极限才是 0。")}</p>
     </>
   );
 }
 function Halting() {
+  const { t } = useLanguage();
+
   const [prediction, setPrediction] = useState<number | null>(null),
     [step, setStep] = useState(0);
   return (
@@ -187,54 +187,50 @@ function Halting() {
             setPrediction(1);
             setStep(0);
           }}
-        >
-          H 预测：会停
-        </button>
+        >{t("H 预测：会停")}</button>
         <button
           className={prediction === 0 ? "active" : ""}
           onClick={() => {
             setPrediction(0);
             setStep(0);
           }}
-        >
-          H 预测：不停
-        </button>
+        >{t("H 预测：不停")}</button>
       </div>
       <div className="trace">
         <div className="trace-line">
-          <span>01</span> 输入 D 的编码给 D
-        </div>
+          <span>01</span>{t("输入 D 的编码给 D")}</div>
         <div className={`trace-line ${step < 1 ? "muted" : ""}`}>
           <span>02</span>
-          {step >= 1 ? `H(D,D) = ${prediction}` : "等待预测器回答"}
+          {step >= 1 ? `H(D,D) = ${prediction}` : t("等待预测器回答")}
         </div>
         <div className={`trace-line ${step < 2 ? "muted" : ""}`}>
           <span>03</span>
           {step >= 2
             ? prediction === 1
-              ? "D 进入无限循环"
-              : "D 立即 return"
-            : "执行 D 的对应分支"}
+              ? t("D 进入无限循环")
+              : t("D 立即 return")
+            : t("执行 D 的对应分支")}
         </div>
         <div className={`trace-line ${step < 3 ? "muted" : ""}`}>
           <span>04</span>
-          {step >= 3 ? "预测与实际行为矛盾" : "比较预测与实际行为"}
+          {step >= 3 ? t("预测与实际行为矛盾") : t("比较预测与实际行为")}
         </div>
       </div>
       <button
         className="primary small"
         disabled={prediction === null || step === 3}
         onClick={() => setStep((n) => n + 1)}
-      >
-        执行下一步 <ChevronRight size={16} />
+      >{t("执行下一步")}<ChevronRight size={16} />
       </button>
       {step === 3 && (
-        <p className="result">试试另一个预测。你会发现两种答案都无法自洽。</p>
+        <p className="result">{t("试试另一个预测。你会发现两种答案都无法自洽。")}</p>
       )}
     </>
   );
 }
 function Cache() {
+  const { t } = useLanguage();
+
   const [conflict, setConflict] = useState(true),
     [step, setStep] = useState(0);
   const b = conflict ? 64 : 16,
@@ -281,20 +277,19 @@ function Cache() {
       </div>
       <p className="hint" aria-live="polite">
         {current
-          ? `访问 0x${current.address.toString(16).padStart(2, "0")} → set ${current.set}，tag ${current.tag}。${current.hit ? "命中。" : "未命中，装入并替换该行。"}`
-          : "从空 cache 开始，一次读取一个地址。"}
+          ? t("访问 0x{0} → set {1}，tag {2}。{3}", current.address.toString(16).padStart(2, "0"), current.set, current.tag, current.hit ? t("命中。") : t("未命中，装入并替换该行。"))
+          : t("从空 cache 开始，一次读取一个地址。")}
       </p>
       <div className="button-row">
         <button
           className="primary small"
           disabled={step === 6}
           onClick={() => setStep((n) => n + 1)}
-        >
-          下一次访问 <ChevronRight size={16} />
+        >{t("下一次访问")}<ChevronRight size={16} />
         </button>
         <button
           className="icon-button"
-          aria-label="重置缓存"
+          aria-label={t("重置缓存")}
           onClick={() => setStep(0)}
         >
           <RotateCcw size={17} />
@@ -321,12 +316,14 @@ const events = [
   },
 ];
 function Timeline() {
+  const { t } = useLanguage();
+
   const [order, setOrder] = useState<number[]>([]),
     [checked, setChecked] = useState(false);
   const correct = order.join(",") === "0,1,2";
   return (
     <>
-      <p>按你认为的时间顺序点击事件：</p>
+      <p>{t("按你认为的时间顺序点击事件：")}</p>
       <div className="timeline-options">
         {[2, 0, 1].map((i) => (
           <button
@@ -335,7 +332,7 @@ function Timeline() {
             onClick={() => setOrder((o) => [...o, i])}
           >
             <span>{order.includes(i) ? order.indexOf(i) + 1 : "+"}</span>
-            {events[i].title}
+            {t(events[i].title)}
           </button>
         ))}
       </div>
@@ -343,15 +340,15 @@ function Timeline() {
         <>
           <p className="result">
             {correct
-              ? "顺序正确。"
-              : "这里是实际顺序；时间先后本身不证明因果。"}
+              ? t("顺序正确。")
+              : t("这里是实际顺序；时间先后本身不证明因果。")}
           </p>
           <div className="timeline">
             {events.map((e) => (
               <div key={e.date}>
                 <b>{e.date}</b>
-                <h4>{e.title}</h4>
-                <p>{e.detail}</p>
+                <h4>{t(e.title)}</h4>
+                <p>{t(e.detail)}</p>
               </div>
             ))}
           </div>
@@ -362,12 +359,10 @@ function Timeline() {
           className="primary small"
           disabled={order.length !== 3 || checked}
           onClick={() => setChecked(true)}
-        >
-          揭示时间线
-        </button>
+        >{t("揭示时间线")}</button>
         <button
           className="icon-button"
-          aria-label="重新排列时间线"
+          aria-label={t("重新排列时间线")}
           onClick={() => {
             setOrder([]);
             setChecked(false);
@@ -376,9 +371,7 @@ function Timeline() {
           <RotateCcw size={17} />
         </button>
       </div>
-      <p className="hint">
-        来源：Bank of England 的 History 与 Founding documents。
-      </p>
+      <p className="hint">{t("来源：Bank of England 的 History 与 Founding documents。")}</p>
     </>
   );
 }
@@ -400,15 +393,17 @@ const evidence = [
   },
 ];
 function Evidence() {
+  const { t } = useLanguage();
+
   const [index, setIndex] = useState(0),
     [answer, setAnswer] = useState<number | null>(null);
   const item = evidence[index];
   return (
     <>
       <span className="eyebrow">EVIDENCE FILE {index + 1} / 3</span>
-      <blockquote>{item.text}</blockquote>
+      <blockquote>{t(item.text)}</blockquote>
       <div className="choices">
-        {["事实陈述", "机制解释", "反事实推断"].map((x, i) => (
+        {[t("事实陈述"), t("机制解释"), t("反事实推断")].map((x, i) => (
           <button
             className={
               answer === i ? (i === item.answer ? "correct" : "incorrect") : ""
@@ -423,9 +418,9 @@ function Evidence() {
       {answer !== null && (
         <p className="result">
           {answer === item.answer
-            ? "判断正确。"
-            : "再想想证据能直接观察到什么。"}
-          {item.why}
+            ? t("判断正确。")
+            : t("再想想证据能直接观察到什么。")}
+          {t(item.why)}
         </p>
       )}
       <button
@@ -435,12 +430,14 @@ function Evidence() {
           setAnswer(null);
         }}
       >
-        {index === 2 ? "从头再看" : "下一份材料"} <ChevronRight size={16} />
+        {index === 2 ? t("从头再看") : t("下一份材料")} <ChevronRight size={16} />
       </button>
     </>
   );
 }
 function Voting() {
+  const { t } = useLanguage();
+
   const [counts, setCounts] = useState([1, 1, 1]);
   const results = pairwise(counts),
     winner = condorcetWinner(counts),
@@ -454,14 +451,14 @@ function Voting() {
           <label key={p}>
             <span>
               {p}
-              <b>{counts[i]} 人</b>
+              <b>{counts[i]} {t("人")}</b>
             </span>
             <input
               type="range"
               min="1"
               max="9"
               value={counts[i]}
-              aria-label={`${p} 的人数`}
+              aria-label={t("{0} 的人数", p)}
               onChange={(e) =>
                 setCounts((v) =>
                   v.map((n, j) => (j === i ? +e.target.value : n)),
@@ -480,21 +477,23 @@ function Voting() {
             <strong>
               {r.av} : {r.bv}
             </strong>
-            <b>{r.winner === "tie" ? "平票" : `${r.winner} 胜`}</b>
+            <b>{r.winner === "tie" ? t("平票") : t("{0} 胜", r.winner)}</b>
           </div>
         ))}
       </div>
       <p className="result" aria-live="polite">
         {winner
-          ? `Condorcet winner：${winner}，逐对击败其他候选。`
+          ? t("Condorcet winner：{0}，逐对击败其他候选。", winner)
           : cycle
-            ? "出现多数循环！没有 Condorcet winner。"
-            : "存在平票，没有严格 Condorcet winner。"}
+            ? t("出现多数循环！没有 Condorcet winner。")
+            : t("存在平票，没有严格 Condorcet winner。")}
       </p>
     </>
   );
 }
 function Agenda() {
+  const { t } = useLanguage();
+
   const [pair, setPair] = useState("AB");
   const outcomes: Record<string, { first: string; last: string }> = {
     AB: { first: "A", last: "C" },
@@ -504,7 +503,7 @@ function Agenda() {
   const o = outcomes[pair];
   return (
     <>
-      <p className="hint">固定多数关系：A → B → C → A</p>
+      <p className="hint">{t("固定多数关系：A → B → C → A")}</p>
       <div className="segmented">
         {["AB", "BC", "CA"].map((p) => (
           <button
@@ -521,20 +520,22 @@ function Agenda() {
         <p>
           {pair[0]} vs {pair[1]}
         </p>
-        <strong>{o.first} 胜出</strong>
+        <strong>{o.first} {t("胜出")}</strong>
       </div>
       <div className="agenda-stage final">
         <span>FINAL ROUND</span>
         <p>
           {o.first} vs {o.last}
         </p>
-        <strong>{o.last} 最终胜出</strong>
+        <strong>{o.last} {t("最终胜出")}</strong>
       </div>
-      <p className="hint">改变的只有先后顺序。模型假设每轮 sincere voting。</p>
+      <p className="hint">{t("改变的只有先后顺序。模型假设每轮 sincere voting。")}</p>
     </>
   );
 }
 export function Lab({ article }: { article: Article }) {
+  const { t } = useLanguage();
+
   const component = {
     measure: <Measure />,
     cantor: <Cantor />,
@@ -549,7 +550,7 @@ export function Lab({ article }: { article: Article }) {
     <section className="lab">
       <div className="lab-header">
         <span className="live-dot" />
-        <span className="eyebrow">THOUGHT LAB · 动手想一想</span>
+        <span className="eyebrow">{t("THOUGHT LAB · 动手想一想")}</span>
       </div>
       <p className="lab-intro">{article.labIntro}</p>
       {component}

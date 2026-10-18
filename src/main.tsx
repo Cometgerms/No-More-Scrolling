@@ -1,8 +1,19 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { LanguageProvider, useLanguage } from "./i18n";
 import "katex/dist/katex.min.css";
 import "./styles.css";
+function LoadingError() {
+  const { t } = useLanguage();
+  return (
+    <div className="empty">
+      <h1>{t("这次加载遇到了问题。")}</h1>
+      <p>{t("本地数据未被主动清除。请重新打开应用。")}</p>
+      <button className="primary" onClick={() => location.reload()}>{t("重新加载")}</button>
+    </div>
+  );
+}
 class Boundary extends React.Component<
   { children: React.ReactNode },
   { error: boolean }
@@ -13,22 +24,18 @@ class Boundary extends React.Component<
   }
   render() {
     return this.state.error ? (
-      <div className="empty">
-        <h1>这次加载遇到了问题。</h1>
-        <p>本地数据未被主动清除。请重新打开应用。</p>
-        <button className="primary" onClick={() => location.reload()}>
-          重新加载
-        </button>
-      </div>
+      <LoadingError />
     ) : (
       this.props.children
     );
   }
 }
 createRoot(document.getElementById("root")!).render(
-  <Boundary>
-    <App />
-  </Boundary>,
+  <LanguageProvider>
+    <Boundary>
+      <App />
+    </Boundary>
+  </LanguageProvider>,
 );
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {

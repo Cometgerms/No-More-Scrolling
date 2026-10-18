@@ -1,6 +1,7 @@
 import type { Article, Block, Concept, Edge, Section } from "./model";
 const t = (body: string): Block => ({ kind: "text", body });
 const m = (body: string): Block => ({ kind: "math", body });
+const f = (body: "measure" | "cantor" | "diagonal"): Block => ({ kind: "figure", body });
 const n = (label: string, body: string): Block => ({
   kind: "note",
   label,
@@ -187,16 +188,17 @@ export const articles: Article[] = [
         ),
         m("X\\sim\\operatorname{Uniform}[0,1],\\qquad \\mathbb P(X=x)=0"),
         t(
-          "所以每个指定的点都只能分到零概率。然而飞镖总要落在某个点上。矛盾藏在哪里？先不要把“概率为零”和“不可能”当作同一个命题。",
+          "所以每个指定的 singleton \\(\\{x\\}\\) 都只能分到零概率。但 \\(X\\in[0,1]\\) 必然发生。关键区别是 null event（零测事件）与 empty event（空事件）：\\(\\mathbb P(A)=0\\) 并不推出 \\(A=\\varnothing\\)。",
         ),
+        f("measure"),
       ),
       s(
         "02 · 加法有一条隐藏的边界",
         t(
-          "Measure 把“给集合赋予大小”变成一套规则。在 probability space 中，样本空间的测度为 1；对可数个两两不交的事件，我们要求 countable additivity。",
+          "Probability space 写作 \\( (\\Omega,\\mathcal F,\\mathbb P) \\)：sample space \\(\\Omega\\)、σ-algebra \\(\\mathcal F\\)、probability measure \\(\\mathbb P\\)。其中 \\(\\mathcal F\\) 对补集和可数并封闭，\\(\\mathbb P(\\Omega)=1\\)。对 pairwise disjoint 的可测事件，要求 countable additivity：",
         ),
         m(
-          "A_i\\cap A_j=\\varnothing\\ (i\\ne j)\\quad\\Longrightarrow\\quad\n\\mathbb P\\!\\left(\\bigsqcup_{n=1}^{\\infty} A_n\\right)=\\sum_{n=1}^{\\infty}\\mathbb P(A_n)",
+          "\\begin{gathered} A_i\\cap A_j=\\varnothing\\quad(i\\ne j),\\quad A_n\\in\\mathcal F\\\\[6pt] \\mathbb P\\!\\left(\\bigsqcup_{n=1}^{\\infty} A_n\\right) =\\sum_{n=1}^{\\infty}\\mathbb P(A_n) \\end{gathered}",
         ),
         t(
           "关键在于 n 能按自然数排队。区间里的所有实数无法这样列成一个序列，因此把区间拆成所有 singleton 后，不能直接套这条公理。这个等式的适用条件从来没有覆盖那个拆法。",
@@ -223,7 +225,7 @@ export const articles: Article[] = [
         t(
           "现实测量只能告诉你落点在某个分辨率范围内，比如 0.49 到 0.51；这个事件有正概率。缩小范围时，区间概率连续下降到零。单点是这个极限，但这个极限不妨碍最终观测到某个数。",
         ),
-        m("\\mathbb P(a\\le X\\le b)=b-a\\qquad(0\\le a\\le b\\le1)"),
+        m("\\begin{gathered} f_X(x)=\\mathbf 1_{[0,1]}(x)\\\\[6pt] \\mathbb P(a\\le X\\le b)=\\int_a^b f_X(x)\\,dx=b-a\\\\ 0\\le a\\le b\\le1 \\end{gathered}"),
         t(
           "现在试着改变下面的区间宽度。随后再问一个更难的问题：所有零测度集合都可数吗？下一张 Cantor set 卡会拆掉这个直觉。",
         ),
@@ -232,7 +234,7 @@ export const articles: Article[] = [
     deep: s(
       "深入 · 从上连续性",
       t(
-        "令 Aₙ=[x−1/n,x+1/n]∩[0,1]。它们递减到 {x}，且第一个集合的测度有限。Measure 的 continuity from above 给出：",
+        "对 \\(x\\in[0,1]\\)，令 \\(A_n=[x-1/n,x+1/n]\\cap[0,1]\\)。它们递减到 \\(\\{x\\}\\)，且 \\(\\mathbb P(A_1)<\\infty\\)。Measure 的 continuity from above 给出：",
       ),
       m(
         "A_n\\downarrow\\{x\\}\\quad\\Longrightarrow\\quad\n\\mathbb P(\\{x\\})=\\lim_{n\\to\\infty}\\mathbb P(A_n)=0",
@@ -242,7 +244,7 @@ export const articles: Article[] = [
       ),
     ),
     quiz: {
-      question: "已知 A⊆[0,1] 不可数，能推出 λ(A)>0 吗？（假设 A 可测。）",
+      question: "已知 \\(A\\subseteq[0,1]\\) 不可数，能推出 \\(\\lambda(A)>0\\) 吗？（假设 A 可测。）",
       options: [
         "能；每个点的零累积成正数",
         "不能；标准 Cantor set 是反例",
@@ -276,7 +278,7 @@ export const articles: Article[] = [
       s(
         "01 · 一条线段的消失实验",
         t(
-          "从 [0,1] 出发，删掉开区间 (1/3,2/3)。留下两端，再从每一段的中间删掉三分之一。端点始终保留。重复 n 次之后，你手中有 2ⁿ 个闭区间，每段长度 3⁻ⁿ。",
+          "从 \\([0,1]\\) 出发，删掉开区间 \\((1/3,2/3)\\)。留下两端，再从每一段的中间删掉三分之一。端点始终保留。重复 \\(n\\) 次后，有 \\(2^n\\) 个 closed intervals，每段长度 \\(3^{-n}\\)。",
         ),
         m(
           "C_0=[0,1],\\quad C=\\bigcap_{n=0}^{\\infty}C_n,\\quad\\lambda(C_n)=\\left(\\frac23\\right)^n",
@@ -284,11 +286,12 @@ export const articles: Article[] = [
         t(
           "屏幕越来越像灰尘，但我们关心的 C 是全部有限步骤的交集，不是某一帧。",
         ),
+        f("cantor"),
       ),
       s(
         "02 · 长度确实消失了",
         t(
-          "这些闭集递减，初始测度有限。由 continuity from above，极限集合的测度等于测度的极限。所以 λ(C)=0。到这里你也许会猜：只剩少数端点了吧？",
+          "这些 closed sets 递减，初始测度有限。由 continuity from above，极限集合的测度等于测度的极限。所以 \\(\\lambda(C)=0\\)。到这里你也许会猜：只剩少数端点了吧？",
         ),
         m("\\lambda(C)=\\lim_{n\\to\\infty}\\left(\\frac23\\right)^n=0"),
         t(
@@ -312,6 +315,7 @@ export const articles: Article[] = [
         t(
           "Cardinality 问能否配对，measure 问大小。Cantor set 与实数区间有同样的基数，却有不同的 Lebesgue measure。把它放大一点或画得粗一点，都不会改变这两个数学事实。",
         ),
+        m("\\begin{gathered} |C|=|[0,1]|=2^{\\aleph_0}\\\\ \\lambda(C)=0\\quad\\text{but}\\quad\\lambda([0,1])=1 \\end{gathered}"),
         n(
           "模型边界",
           "下面显示的是有限级近似 Cₙ。屏幕像素不能展示真正的极限集；动画提供直觉，证明来自上面的极限与单射。",
@@ -324,16 +328,17 @@ export const articles: Article[] = [
         "若所有二进制序列能排成 b¹,b²,…，构造 dₙ=1−bⁿₙ。新序列 d 在第 n 位与第 n 个序列不同，因此不在列表里。这就是 diagonalization，也会出现在停机问题里。",
       ),
       m(
-        "d_n=1-b^{(n)}_n\\quad\\Longrightarrow\\quad d\\ne b^{(n)}\\ \text{for every }n",
+        "\\begin{gathered} d_n=1-b^{(n)}_n\\\\ d\\ne b^{(n)}\\quad\\text{for every }n\\in\\mathbb N \\end{gathered}",
       ),
+      f("diagonal"),
     ),
     quiz: {
       question: "进行 5 次删除后，剩余长度是多少？",
-      options: ["0", "(2/3)⁵", "1/3⁵"],
+      options: ["\\(0\\)", "\\((2/3)^5\\)", "\\(1/3^5\\)"],
       answer: 1,
       explanations: [
         "任意有限步的剩余长度仍为正。只有极限为零。",
-        "正确。共 2⁵ 段，每段 3⁻⁵，总长 (2/3)⁵。",
+        "正确。共 \\(2^5\\) 段，每段 \\(3^{-5}\\)，总长 \\((2/3)^5\\)。",
         "这是一段的长度，漏算了共 2⁵ 段。",
       ],
     },
