@@ -2066,3 +2066,73 @@ main {
 .account-import, .note-conflict { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
 .note-conflict pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto; font: inherit; }
 .account-panel [role="alert"] { color: #d66e58; }
+
+/* Keep AI in a reserved header slot, away from reading and collection actions. */
+#ai-launcher-slot { display: flex; }
+.chat-launcher { position: static; padding: 8px 11px; min-height: 44px; border-radius: 12px; box-shadow: none; background: var(--panel); color: var(--accent); }
+.chat-launcher svg { width: 18px; }
+.chat-launcher span { display: inline; font-size: 12px; }
+.chat-panel { top: calc(90px + env(safe-area-inset-top)); bottom: 20px; height: auto; max-height: 760px; }
+.chat-message { white-space: normal; min-width: 0; }
+.chat-prose p { margin: 8px 0; white-space: pre-wrap; }
+.chat-prose h3 { margin: 14px 0 8px; font-size: 16px; }
+.chat-prose ul, .chat-prose ol { padding-left: 23px; margin: 10px 0; }
+.chat-prose li { margin: 6px 0; }
+.chat-prose code { font-family: ui-monospace, monospace; font-size: .9em; background: var(--panel2); padding: 2px 4px; border-radius: 4px; }
+.chat-prose pre { max-width: 100%; overflow-x: auto; padding: 12px; background: var(--panel2); border-radius: 10px; white-space: pre; }
+.chat-prose pre code { padding: 0; }
+.chat-table { max-width: 100%; overflow-x: auto; }
+.chat-table table { border-collapse: collapse; min-width: 100%; font-size: 13px; }
+.chat-table th, .chat-table td { padding: 8px; border: 1px solid var(--line); text-align: left; min-width: 90px; }
+.chat-prose .formula-panel, .chat-prose .formula { min-width: 0; max-width: 100%; }
+.chat-prose .inline-math { display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
+.chat-context { max-height: 28%; overflow-y: auto; }
+.chat-compose { max-height: 45%; overflow-y: auto; }
+.chat-messages { min-height: 0; }
+.graph-edge { cursor: pointer; }
+.graph-edge:focus path:first-child, .graph-edge:hover path:first-child { stroke-width: 5; opacity: 1; }
+.graph-node text { paint-order: stroke; stroke: var(--panel); stroke-width: 5px; stroke-linejoin: round; pointer-events: none; }
+.graph-node > circle:first-child { fill: var(--panel2); }
+.graph-panel { background: radial-gradient(ellipse at 40% 25%, color-mix(in srgb,var(--accent) 5%,var(--panel)),var(--panel)); }
+.graph-tools .zoom-label { align-self: center; padding: 0 8px; font-size: 11px; color: var(--muted); }
+.graph-tools > button { min-width: 44px; min-height: 44px; }
+.concept-detail, .edge-detail-anchor, #account-access { scroll-margin-top: calc(110px + env(safe-area-inset-top)); }
+.edge-editor h2 { font-size: 19px; overflow-wrap: anywhere; }
+.edge-editor textarea { min-height: 150px; }
+.edge-row { flex-wrap: wrap; }
+.edge-row > button:first-child { min-width: 0; flex: 1 1 60%; }
+.avatar-art { width: 100%; height: 100%; }
+.profile-avatar { background: radial-gradient(circle at 30% 20%,var(--panel2),var(--bg)); overflow: hidden; }
+.profile-editor .avatar-art, #profile-editor .avatar-art { width: 52px; height: 52px; }
+.avatar-1 { color: #87d8e4; }.avatar-2 { color: #c5adf1; }.avatar-3 { color: #edbc83; }
+.profile-heading h1 { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.worn-badges { display: inline-flex; align-items: center; gap: 6px; }
+.worn-badges > span { display: grid; place-items: center; padding: 6px; border-radius: 50%; border: 1px solid currentColor; }
+.badge-rhythm.unlocked, .worn-badges .badge-rhythm { color: var(--accent); }
+.badge-knowledge.unlocked, .worn-badges .badge-knowledge { color: #87d8e4; }
+.badge-secret.unlocked, .worn-badges .badge-secret { color: #c5adf1; }
+.achievement strong { text-align: center; font-size: 13px; min-height: 34px; }
+.achievement .chip { margin-top: auto; min-height: 44px; }
+.achievement .chip[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); }
+.account-entry { margin: 0 0 16px; width: 100%; justify-content: center; text-decoration: none; }
+.account-signin { padding: 20px; border-radius: 18px; border: 1px solid var(--accent); background: linear-gradient(140deg,color-mix(in srgb,var(--accent) 7%,var(--panel)),var(--panel)); }
+.auth-tabs { display: flex; gap: 6px; padding: 5px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; margin: 18px 0; }
+.auth-tabs button { flex: 1; min-height: 48px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+.auth-tabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.email-login form > .primary { width: 100%; justify-content: center; min-height: 48px; margin-top: 10px; }
+@media (max-width: 600px) {
+  .header-right { gap: 8px; }
+  .chat-panel { top: calc(var(--chat-top, 0px) + env(safe-area-inset-top) + 8px); bottom: auto; height: calc(var(--chat-height, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px); max-height: none; right: 8px; width: calc(100vw - 16px); border-radius: 16px; }
+  .chat-panel > header { padding: 10px 14px; }
+  .chat-panel .eyebrow { display: none; }
+  .chat-panel h2 { margin: 0; }
+  .chat-context { padding: 0 14px 8px; }
+  .chat-context .chat-check { min-height: 36px; }
+  .chat-compose { padding: 10px 12px; }
+  .chat-launcher { padding: 8px; }
+  .graph { height: 580px; }
+  .graph-caption { gap: 8px; letter-spacing: 0; }
+  .concept-detail { padding: 18px; }
+  .profile-heading { gap: 16px; }
+  .profile-avatar { width: 82px; height: 82px; }
+}

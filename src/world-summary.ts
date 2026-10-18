@@ -1,7 +1,13 @@
 import { parseFeed, type WorldFeed, type WorldEvent } from "./world-data";
+import { requestAnswer, type ChatConfig } from "./chat";
 export type Brief = { id: string; summary: string; significance: string; category: "diplomacy" | "policy" | "other" };
 export const HISTORY_KEY = "nms-world-history-v1";
 export const SUMMARY_ENDPOINT = "nms-summary-endpoint-v1";
+export const SUMMARY_MODE = "nms-summary-mode-v1";
+export async function summarizeWithAI(config: ChatConfig, events: WorldEvent[], language: string, signal: AbortSignal, request: typeof fetch = fetch) {
+  const text = await requestAnswer(config, [{ role: "user", content: 'Summarize the supplied reports, focusing on diplomacy and public policy. Use only supplied evidence; headlines do not establish full article details. Separate reported developments from possible implications. Return only JSON: {"summaries":[{"id":"source id","summary":"reported facts","significance":"qualified analysis","category":"diplomacy or policy or other"}]}. Include each report ID once.' }], { id: "world-summary", title: "Source reports", text: JSON.stringify(events) }, language, signal, request);
+  return parseBriefs(JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")), events);
+}
 export function topic(event: WorldEvent): Brief["category"] {
   if (/diplomat|sanction|treaty|summit|ceasefire|negotiat|ambassador|foreign minister|nato|united nations/i.test(event.title)) return "diplomacy";
   if (/policy|government|election|parliament|tariff|legislat|reform|president|minister|protest|law\b/i.test(event.title)) return "policy";

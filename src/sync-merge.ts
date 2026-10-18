@@ -18,6 +18,15 @@ export function mergeStates(base: State, local: State, remote: State) {
     Object.assign(state, { [key]: choose(base[key], local[key], remote[key]) });
   for (const key of ["name", "bio", "avatar"] as const)
     Object.assign(state.profile, { [key]: choose(base.profile[key], local.profile[key], remote.profile[key]) });
+  if (local.profile.badges || remote.profile.badges) state.profile.badges = choose(base.profile.badges ?? [], local.profile.badges ?? [], remote.profile.badges ?? []);
+  if (local.unlocked || remote.unlocked) state.unlocked = [...new Set([...(local.unlocked ?? []), ...(remote.unlocked ?? [])])];
+  if (local.edgeReasons || remote.edgeReasons) {
+    state.edgeReasons = {};
+    for (const id of keys(base.edgeReasons ?? {}, local.edgeReasons ?? {}, remote.edgeReasons ?? {})) {
+      const value = choose(base.edgeReasons?.[id], local.edgeReasons?.[id], remote.edgeReasons?.[id]);
+      if (value !== undefined) state.edgeReasons[id] = value;
+    }
+  }
   state.saved = [...new Set([...base.saved, ...local.saved, ...remote.saved])].filter(id => choose(base.saved.includes(id), local.saved.includes(id), remote.saved.includes(id)));
   state.notes = {};
   for (const id of keys(base.notes, local.notes, remote.notes)) {

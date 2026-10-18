@@ -18,8 +18,8 @@ export function AccountPanel() {
   const labels = {
     guest: c("本机访客", "Guest on this device"), pending: c("修改已在本机保存，等待同步", "Changes saved locally; waiting to sync"), syncing: c("正在同步…", "Syncing…"), synced: c("已与云端同步", "Synced with cloud"), error: c("暂未同步，联网后可重试", "Not synced yet; reconnect and retry"), conflict: c("笔记有不同版本，请选择后同步", "Choose a note version to finish syncing"),
   };
-  return <section className="settings-section account-panel" aria-label={c("账号与同步", "Account and sync")}>
-    <h2>{c("账号与同步", "Account and sync")}</h2>
+  return <section id="account-access" className={`settings-section account-panel ${owner ? "" : "account-signin"}`} aria-label={c("账号与同步", "Account and sync")}>
+    <h2>{owner ? c("账号与同步", "Account and sync") : c("登录 / 创建账号", "Sign in / Create account")}</h2>
     <p role="status">{labels[status]}</p>
     {owner ? <>
       <p className="account-email">{owner.email ?? owner.id}</p>

@@ -33,10 +33,11 @@ export function EmailLogin() {
     } finally { setBusy(false); setPassword(""); setConfirmation(""); }
   }
   return <div className="email-login">
-    <div className="segmented" aria-label={c("登录方式", "Account action")}>
+    <div className="auth-tabs" aria-label={c("登录方式", "Account action")}>
       <button type="button" disabled={busy} aria-pressed={mode === "login"} onClick={() => switchMode("login")}>{c("登录", "Sign in")}</button>
-      <button type="button" disabled={busy} aria-pressed={mode === "register"} onClick={() => switchMode("register")}>{c("注册", "Create account")}</button>
+      <button type="button" disabled={busy} aria-pressed={mode === "register"} onClick={() => switchMode("register")}>{c("创建账号", "Create account")}</button>
     </div>
+    <h3>{mode === "register" ? c("创建你的账号", "Create your account") : mode === "reset" ? c("找回密码", "Reset your password") : c("欢迎回来", "Welcome back")}</h3>
     <form onSubmit={event => { event.preventDefault(); void submit(); }}>
       <label className="field-label">{c("邮箱", "Email")}<input type="email" autoComplete="email" required value={email} disabled={busy} onChange={e => setEmail(e.target.value)} /></label>
       {mode !== "reset" && <label className="field-label">{c("密码", "Password")}<input type="password" autoComplete={mode === "register" ? "new-password" : "current-password"} minLength={mode === "register" ? 8 : undefined} required value={password} disabled={busy} onChange={e => setPassword(e.target.value)} /></label>}

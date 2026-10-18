@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "./i18n";
-import { SUMMARY_ENDPOINT, parseBriefs, summarize, type Brief } from "./world-summary";
+import { SUMMARY_ENDPOINT, SUMMARY_MODE, parseBriefs, summarize, summarizeWithAI, type Brief } from "./world-summary";
+import { useAI } from "./Assistant";
 import type { WorldEvent } from "./world-data";
 export function WorldReports({ events }: { events: WorldEvent[] }) {
   const { language } = useLanguage(), en = language === "en";
+  const { config } = useAI();
   const key = `nms-brief-${language}-${events.map(e => `${e.id}:${e.publishedAt}`).join("|")}`;
   const [briefs, setBriefs] = useState<Brief[]>([]), [busy, setBusy] = useState(false), [notice, setNotice] = useState("");
   const controller = useRef<AbortController | null>(null);
@@ -13,12 +15,12 @@ export function WorldReports({ events }: { events: WorldEvent[] }) {
     return () => { controller.current?.abort(); controller.current = null; };
   }, [key]);
   async function generate() {
-    let endpoint = ""; try { endpoint = localStorage.getItem(SUMMARY_ENDPOINT) ?? ""; } catch { /* Report below. */ }
-    if (!endpoint) { setNotice(en ? "Configure the summary endpoint in Settings first." : "请先在设置中填写摘要接口地址。"); return; }
+    let endpoint = ""; try { if (localStorage.getItem(SUMMARY_MODE) === "custom") endpoint = localStorage.getItem(SUMMARY_ENDPOINT) ?? ""; } catch { /* Report below. */ }
+    if (!endpoint && !config.key) { setNotice(en ? "Configure AI in Settings first." : "请先在设置中填写共用的 AI 配置。"); return; }
     const abort = new AbortController(); controller.current = abort; setBusy(true); setNotice("");
     const timeout = setTimeout(() => abort.abort(), 60000);
     try {
-      const result = await summarize(endpoint, events, language, abort.signal);
+      const result = endpoint ? await summarize(endpoint, events, language, abort.signal) : await summarizeWithAI(config, events, language, abort.signal);
       if (abort.signal.aborted) return;
       setBriefs(result);
       try {

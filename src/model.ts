@@ -60,7 +60,9 @@ export type Progress = {
   feedback?: Feedback;
 };
 export type State = {
-  profile: { name: string; bio: string; avatar: number };
+  profile: { name: string; bio: string; avatar: number; badges?: string[] };
+  unlocked?: string[];
+  edgeReasons?: Record<string, string>;
   version: 1;
   saved: string[];
   notes: Record<string, string>;
@@ -80,7 +82,7 @@ export const SUBJECTS: Record<
 > = {
   math: { name: "数学", en: "MATHEMATICS", color: "#c1f27b", symbol: "∑" },
   cs: { name: "计算机", en: "COMPUTER SCIENCE", color: "#87d8e4", symbol: "⌘" },
-  history: { name: "历史", en: "HISTORY", color: "#edbc83", symbol: "⌛" },
+  history: { name: "历史", en: "HISTORY", color: "#edbc83", symbol: "⌛︎" },
   politics: { name: "政治", en: "POLITICS", color: "#c5adf1", symbol: "◎" },
 };
 export const initialState: State = {

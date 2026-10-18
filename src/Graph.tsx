@@ -1,4 +1,7 @@
 import { useLanguage, useContent } from "./i18n";
+import { SubjectIcon } from "./ProfileArt";
+import { EdgeEditor } from "./EdgeEditor";
+import { edgeKey, gestureView, zoomAt, type Point, type View } from "./graph-gesture";
 import { useRef, useState } from "react";
 import {
   Bookmark,
@@ -9,22 +12,13 @@ import {
   Search,
   Link2,
 } from "lucide-react";
-import { SUBJECTS, type State, type Subject } from "./model";
+import { SUBJECTS, type Edge, type State, type Subject } from "./model";
 const positions: Record<string, [number, number]> = {
-  measure: [160, 90],
-  countable: [350, 70],
-  cantor: [135, 230],
-  diagonal: [335, 220],
-  halting: [470, 330],
-  decidability: [340, 440],
-  cache: [90, 425],
-  modular: [80, 570],
-  bank: [215, 680],
-  credit: [415, 670],
-  causal: [110, 800],
-  voting: [470, 90],
-  relation: [480, 530],
-  agenda: [430, 830],
+  measure: [100, 70], countable: [300, 70], voting: [485, 70],
+  cantor: [100, 235], diagonal: [300, 235], relation: [485, 235],
+  cache: [100, 400], halting: [300, 400],
+  modular: [100, 565], decidability: [300, 565], agenda: [485, 565],
+  bank: [100, 730], credit: [300, 730], causal: [485, 730],
 };
 export function Graph({
   state,
@@ -45,15 +39,31 @@ export function Graph({
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState<Subject | "all">("all"),
     [savedOnly, setSavedOnly] = useState(false),
-    [zoom, setZoom] = useState(1),
-    [pan, setPan] = useState({ x: 0, y: 0 }),
+    [view, setView] = useState<View>({ zoom: 1, pan: { x: 0, y: 0 } }),
     [linking, setLinking] = useState(false),
     [target, setTarget] = useState(""),
     [label, setLabel] = useState("");
-  const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(
-    null,
-  );
+  const { zoom, pan } = view;
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
+  const detail = useRef<HTMLElement>(null), edgeDetail = useRef<HTMLDivElement>(null);
+  const pointers = useRef(new Map<number, Point>()), moved = useRef(false);
+  const origin = useRef<{ view: View; points: Point[] }>({ view, points: [] });
+  const currentView = useRef(view); currentView.current = view;
+  function point(e: React.PointerEvent<SVGSVGElement>) {
+    const matrix = e.currentTarget.getScreenCTM();
+    return matrix ? new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse()) : { x:e.clientX,y:e.clientY };
+  }
+  function release(e: React.PointerEvent<SVGSVGElement>) {
+    pointers.current.delete(e.pointerId);
+    origin.current = { view: currentView.current, points: [...pointers.current.values()] };
+  }
+  function selectEdge(edge: Edge) {
+    if (moved.current) return;
+    setSelectedEdge(edge);
+    requestAnimationFrame(() => edgeDetail.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
   const svg = useRef<SVGSVGElement>(null);
+  const position = (id: string): [number, number] => positions[id] ?? [100 + (concepts.findIndex(c => c.id === id) % 3) * 190, 150 + Math.floor(concepts.findIndex(c => c.id === id) / 3) * 150];
   const allEdges = [...edges, ...state.edges],
     focus = concepts.find((c) => c.id === selected) ?? concepts[0];
   const near = new Set([
@@ -71,6 +81,8 @@ export function Graph({
   const visible = new Set(filtered.map((c) => c.id));
   function choose(id: string) {
     setSelected(id);
+    setSelectedEdge(null);
+    requestAnimationFrame(() => { detail.current?.scrollIntoView({ behavior: "smooth", block: "start" }); detail.current?.focus({ preventScroll: true }); });
     setLinking(false);
     setTarget("");
     setLabel("");
@@ -80,7 +92,7 @@ export function Graph({
       <div className="page-heading">
         <span className="eyebrow">YOUR CONNECTED MIND</span>
         <h1>{language === "en" ? "Knowledge graph" : "知识图谱"}</h1>
-        <p>{t("每一条连线，都是一个新的为什么。")}</p>
+        <p>{language === "en" ? "Open a concept, trace a connection, build your own understanding." : "打开概念、查看关联，再留下自己的理解。"}</p>
       </div>
       <div className="search">
         <Search size={18} />
@@ -113,7 +125,7 @@ export function Graph({
       <div className="graph-panel">
         <div className="graph-caption">
           <span>{filtered.length} CONCEPTS</span>
-          <span>{t("拖动画布 · 点选节点")}</span>
+          <span>{language === "en" ? "Drag · pinch · tap" : "拖动 · 双指缩放 · 点击探索"}</span>
         </div>
         <svg
           ref={svg}
@@ -121,22 +133,25 @@ export function Graph({
           className="graph"
           role="group"
           aria-label={t("互动知识图谱")}
-          onPointerDown={(e) => {
-            if ((e.target as Element).closest("[data-node]")) return;
-            drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
-            e.currentTarget.setPointerCapture(e.pointerId);
+          onPointerDown={e => {
+            if (e.pointerType === "mouse" && e.button !== 0) return;
+            if (!pointers.current.size) moved.current = false;
+            pointers.current.set(e.pointerId, point(e));
+            if (pointers.current.size > 1) moved.current = true;
+            origin.current = { view: currentView.current, points: [...pointers.current.values()] };
+            (e.target as Element).setPointerCapture(e.pointerId);
           }}
-          onPointerMove={(e) => {
-            if (!drag.current) return;
-            const box = svg.current!.getBoundingClientRect(),
-              scale = 580 / box.width;
-            setPan({
-              x: drag.current.px + (e.clientX - drag.current.x) * scale,
-              y: drag.current.py + (e.clientY - drag.current.y) * scale,
-            });
+          onPointerMove={e => {
+            if (!pointers.current.has(e.pointerId)) return;
+            pointers.current.set(e.pointerId, point(e));
+            const points = [...pointers.current.values()], start = origin.current.points;
+            if (points.some((p,i) => Math.hypot(p.x-start[i].x,p.y-start[i].y)>6)) moved.current = true;
+            const next = gestureView(origin.current.view,start,points);
+            currentView.current = next; setView(next);
           }}
-          onPointerUp={() => (drag.current = null)}
-          onPointerCancel={() => (drag.current = null)}
+          onPointerUp={release}
+          onPointerCancel={e => { moved.current = true; release(e); }}
+          onLostPointerCapture={release}
         >
           <defs>
             <pattern
@@ -150,32 +165,21 @@ export function Graph({
           </defs>
           <rect width="580" height="900" fill="url(#dots)" />
           <g
-            transform={`translate(${pan.x + 290 * (1 - zoom)},${pan.y + 450 * (1 - zoom)}) scale(${zoom})`}
+            transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}
           >
             {allEdges.map((e, i) => {
               if (!visible.has(e.from) || !visible.has(e.to)) return null;
-              const [x1, y1] = positions[e.from],
-                [x2, y2] = positions[e.to];
-              return (
-                <line
-                  key={i}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={
-                    near.has(e.from) && near.has(e.to)
-                      ? "var(--accent)"
-                      : "var(--muted)"
-                  }
-                  strokeWidth={e.personal ? 2 : 1.5}
-                  opacity={near.has(e.from) && near.has(e.to) ? 0.55 : 0.16}
-                  strokeDasharray={e.personal ? "6 5" : undefined}
-                />
-              );
+              const [x1, y1] = position(e.from),
+                [x2, y2] = position(e.to);
+              const active = e.from === focus.id || e.to === focus.id;
+              const path = `M${x1},${y1} Q${(x1+x2)/2+25},${(y1+y2)/2-18} ${x2},${y2}`;
+              return <g key={i} className="graph-edge" role="button" tabIndex={0} aria-label={`${concepts.find(c => c.id === e.from)?.name} ↔ ${concepts.find(c => c.id === e.to)?.name}: ${state.edgeReasons?.[edgeKey(e.from,e.to)] ?? e.label}`} onClick={() => selectEdge(e)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); moved.current = false; selectEdge(e); } }}>
+                <path d={path} fill="none" stroke={active ? "var(--accent)" : "var(--muted)"} strokeWidth={active ? 2.5 : 1.5} opacity={active ? .65 : .25} strokeDasharray={e.personal ? "6 5" : undefined} />
+                <path d={path} fill="none" stroke="transparent" strokeWidth="22" />
+              </g>;
             })}
             {filtered.map((c) => {
-              const [x, y] = positions[c.id],
+              const [x, y] = position(c.id),
                 isActive = c.id === focus.id;
               return (
                 <g
@@ -184,7 +188,7 @@ export function Graph({
                   role="button"
                   tabIndex={0}
                   aria-label={`${c.name}，${c.zh}`}
-                  onClick={() => choose(c.id)}
+                  onClick={() => { if (!moved.current) choose(c.id); }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
@@ -195,6 +199,7 @@ export function Graph({
                   className="graph-node"
                   opacity={near.has(c.id) ? 1 : 0.6}
                 >
+                  <rect x="-88" y="-40" width="176" height="120" rx="18" fill="transparent" />
                   <circle
                     r={isActive ? 31 : 23}
                     fill="var(--panel)"
@@ -209,18 +214,11 @@ export function Graph({
                       opacity=".15"
                     />
                   )}
-                  <text
-                    y="7"
-                    textAnchor="middle"
-                    fill={SUBJECTS[c.subject].color}
-                    fontSize="22"
-                  >
-                    {SUBJECTS[c.subject].symbol}
-                  </text>
+                  <g style={{ color: SUBJECTS[c.subject].color }}><SubjectIcon subject={c.subject} x={-12} y={-12} size={24} /></g>
                   <text
                     y="54"
                     textAnchor="middle"
-                    fontSize="14"
+                    fontSize="16"
                     fill="var(--text)"
                   >
                     {c.name}
@@ -239,12 +237,12 @@ export function Graph({
             })}
           </g>
         </svg>
-        <div className="graph-tools">
+        <div className="graph-tools"><span className="zoom-label">{Math.round(zoom*100)}%</span>
           <button
             className="icon-button"
             aria-label={t("放大图谱")}
-            disabled={zoom >= 2}
-            onClick={() => setZoom((z) => Math.min(2, z + 0.2))}
+            disabled={zoom >= 3}
+            onClick={() => setView(v => zoomAt(v, v.zoom + .25, {x:290,y:450}))}
           >
             <Plus size={17} />
           </button>
@@ -252,7 +250,7 @@ export function Graph({
             className="icon-button"
             aria-label={t("缩小图谱")}
             disabled={zoom <= 0.6}
-            onClick={() => setZoom((z) => Math.max(0.6, z - 0.2))}
+            onClick={() => setView(v => zoomAt(v, v.zoom - .25, {x:290,y:450}))}
           >
             <Minus size={17} />
           </button>
@@ -260,14 +258,14 @@ export function Graph({
             className="icon-button"
             aria-label={t("重置图谱视角")}
             onClick={() => {
-              setZoom(1);
-              setPan({ x: 0, y: 0 });
+              setView({ zoom:1, pan:{x:0,y:0} });
             }}
           >
             <RotateCcw size={17} />
           </button>
         </div>
       </div>
+      <div ref={edgeDetail} className="edge-detail-anchor">{selectedEdge && <EdgeEditor key={edgeKey(selectedEdge.from,selectedEdge.to)} edge={selectedEdge} state={state} update={update} close={() => setSelectedEdge(null)} />}</div>
       <div className="concept-picker" aria-label={t("概念列表")}>
         {filtered.map((c) => (
           <button
@@ -275,7 +273,7 @@ export function Graph({
             className={`chip ${c.id === focus.id ? "active" : ""}`}
             onClick={() => choose(c.id)}
           >
-            {c.zh}
+            {language === "en" ? c.name : c.zh}
           </button>
         ))}
         {filtered.length === 0 && (
@@ -283,7 +281,7 @@ export function Graph({
         )}
       </div>
       <section
-        className="concept-detail"
+        ref={detail} tabIndex={-1} className="concept-detail"
         style={
           { "--subject": SUBJECTS[focus.subject].color } as React.CSSProperties
         }
@@ -310,7 +308,7 @@ export function Graph({
             />
           </button>
         </div>
-        <h2>{focus.name}</h2>
+        <div className="section-heading"><h2>{focus.name}</h2><button className="text-button" onClick={() => svg.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>{language === "en" ? "Back to graph ↑" : "返回图谱 ↑"}</button></div>
         <p>{focus.description}</p>
         <label className="field-label">{t("我的理解")}<textarea
             value={state.notes[focus.id] ?? ""}
@@ -333,13 +331,14 @@ export function Graph({
                 <div className="edge-row" key={i}>
                   <button onClick={() => choose(other)}>
                     <span>
-                      {e.personal ? t("个人关联") : t("概念关系")} · {e.label}
+                      {e.personal ? t("个人关联") : t("概念关系")} · {state.edgeReasons?.[edgeKey(e.from,e.to)] ?? e.label}
                     </span>
                     <strong>
                       {concepts.find((c) => c.id === other)?.name}{" "}
                       <ArrowUpRight size={15} />
                     </strong>
                   </button>
+                  <button className="text-button" onClick={() => { moved.current = false; selectEdge(e); }}>{language === "en" ? "Edit explanation" : "编辑说明"}</button>
                   {e.personal && (
                     <button
                       className="text-button"

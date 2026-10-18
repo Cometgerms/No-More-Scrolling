@@ -1,3 +1,4 @@
+import { version } from "../package.json";
 import { useLanguage, useContent } from "./i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -38,6 +39,7 @@ import { Prose, RichText } from "./Math";
 import { Lab } from "./Labs";
 import { Graph } from "./Graph";
 import { SummarySettings } from "./SummarySettings";
+import { SubjectIcon } from "./ProfileArt";
 import { Profile } from "./Profile";
 import { Rickroll } from "./Rickroll";
 import { World } from "./World";
@@ -184,7 +186,7 @@ function ArticleCard({
     >
       <div className="card-top">
         <span className="subject-label">
-          <i>{sub.symbol}</i>
+          <i><SubjectIcon subject={a.subject} /></i>
           {sub.en}
         </span>
         <span className="card-status">
@@ -426,7 +428,7 @@ export default function App() {
           </span>
         </button>
         <div className="header-right">
-          <span className="edition">VOL. 001</span>
+          <span className="edition">v{version}</span><span id="ai-launcher-slot" />
           <button
             className="language-toggle"
             aria-label={t("切换语言")}
@@ -495,7 +497,7 @@ export default function App() {
               </div>
               <h1>{t("少刷一点。")}<br />
                 <span>{t("多想一点。")}</span>
-                <Rickroll />
+                <Rickroll onUnlock={() => { if (!state.unlocked?.includes("rickroll")) { update(s => ({ ...s, unlocked: [...new Set([...(s.unlocked ?? []), "rickroll"])] })); notify(language === "en" ? "Achievement unlocked · Never Gonna Give You Up" : "成就解锁 · Never Gonna Give You Up"); } }} />
               </h1>
 
             </section>
@@ -664,7 +666,7 @@ export default function App() {
                       }))
                     }
                   >
-                    {v.symbol} {t(v.name)}
+                    <SubjectIcon subject={key as Subject} size={18} /> {t(v.name)}
                   </button>
                 ))}
               </div>
@@ -886,7 +888,7 @@ function Reader({
       </div>
       <div className="reader-heading">
         <span className="subject-label">
-          <i>{sub.symbol}</i>
+          <i><SubjectIcon subject={a.subject} /></i>
           {sub.en}{" "}
           <span>
             · {section + 1}/{a.sections.length}

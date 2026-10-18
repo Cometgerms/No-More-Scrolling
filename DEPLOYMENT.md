@@ -78,7 +78,7 @@ Automated feed validation, request payload/error tests, all previous tests, Type
 
 The profile now supports a local display name, bio and four avatar choices, included in reading backups. Existing backups get default profile fields. Achievements count days with at least 60 seconds of existing reading/graph activity (1, 10, 30, 100 days), not login events. Settings has its own route.
 
-World summaries, diplomacy/policy filtering and 30-date local history are implemented; configure your own service using [SUMMARY-API.md](SUMMARY-API.md). Supabase login and account synchronization are implemented; the summary backend is not implemented. Owner login-provider configuration and live sign-in verification are still required.
+World summaries, diplomacy/policy filtering and 30-date local history are implemented. Summaries use the shared AI endpoint/model/key by default; an optional custom backend can follow [SUMMARY-API.md](SUMMARY-API.md). Supabase login and account synchronization are implemented; the summary backend is not implemented. Owner login-provider configuration and live sign-in verification are still required.
 
 ## Update recovery
 

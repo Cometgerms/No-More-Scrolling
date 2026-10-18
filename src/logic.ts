@@ -124,6 +124,15 @@ export function validateState(raw: unknown): State {
     bio: typeof r.profile.bio === "string" ? r.profile.bio.slice(0, 200) : "",
     avatar: Number.isInteger(r.profile.avatar) && Number(r.profile.avatar) >= 0 && Number(r.profile.avatar) <= 3 ? Number(r.profile.avatar) : 0,
   };
+  if (isRecord(r.profile) && Array.isArray(r.profile.badges)) out.profile.badges = r.profile.badges.filter((v): v is string => typeof v === "string" && /^[a-z0-9-]{1,40}$/.test(v)).slice(0, 3);
+  if (Array.isArray(r.unlocked)) out.unlocked = r.unlocked.includes("rickroll") ? ["rickroll"] : [];
+  if (isRecord(r.edgeReasons)) {
+    out.edgeReasons = {};
+    for (const [key, value] of Object.entries(r.edgeReasons).slice(0,1000)) {
+      const ids = key.split("|");
+      if (ids.length === 2 && ids[0] !== ids[1] && ids.every(id => concepts.some(c => c.id === id)) && typeof value === "string") out.edgeReasons[key] = value.slice(0,3000);
+    }
+  }
   if (Array.isArray(r.saved))
     out.saved = [
       ...new Set(
