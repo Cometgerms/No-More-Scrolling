@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mobile layout regression checks</title>
+<style>body{background:#151a14;color:#dcebd1;font:14px system-ui;margin:20px}button{padding:12px}iframe{display:block;border:1px solid #526a46;margin-top:16px}pre{white-space:pre-wrap}</style>
+<h1>Mobile layout checks</h1>
+<p>Checks header safe-area spacing, chapter gaps and bottom navigation across long/short pages. This does not emulate Safari browser chrome or its keyboard.</p>
+<button id="run">Run layout checks</button><pre id="results" role="status">Ready</pre>
+<iframe title="Layout test app" width="390" height="844" src="../index.html#/saved"></iframe>
+<script type="module">
+const frame = document.querySelector('iframe'), output = document.querySelector('#results');
+const settle = () => new Promise(resolve => setTimeout(resolve, 350));
+document.querySelector('#run').onclick = async () => {
+  const button = document.querySelector('#run'); button.disabled = true;
+  const results = [];
+  try {
+    for (const [width,height,top,bottom] of [[320,667,0,0],[390,844,47,34],[430,932,59,34],[667,375,0,21]]) {
+      frame.width = width; frame.height = height;
+      const doc = frame.contentDocument, win = frame.contentWindow;
+      doc.documentElement.style.setProperty('--safe-top',`${top}px`);
+      doc.documentElement.style.setProperty('--safe-bottom',`${bottom}px`);
+      for (const route of ['read/zero-is-not-impossible','saved','today','saved']) {
+        win.location.hash = '#/' + route; await settle();
+        const nav = doc.querySelector('.bottom-nav').getBoundingClientRect();
+        const header = doc.querySelector('.app-header').getBoundingClientRect();
+        const brand = doc.querySelector('.brand').getBoundingClientRect();
+        const language = doc.querySelector('.language-toggle').getBoundingClientRect();
+        const steps = [...doc.querySelectorAll('.reading-progress button')].map(el => el.getBoundingClientRect());
+        const checks = [
+          ['nav anchored to viewport', Math.abs(nav.bottom - win.innerHeight) < 1],
+          ['header content below safe area', Math.min(brand.top,language.top) - header.top >= top],
+          ['header divider clears controls', header.bottom - Math.max(brand.bottom,language.bottom) >= 12],
+          ['short page fills viewport', doc.querySelector('.app-shell').getBoundingClientRect().height >= win.innerHeight],
+          ['no horizontal page overflow', doc.documentElement.scrollWidth <= win.innerWidth],
+          ['progress gaps and touch targets', steps.every((r,i) => r.height >= 44 && r.width > 0 && (!i || r.left - steps[i-1].right >= 11.9))],
+        ];
+        for (const [name,ok] of checks) results.push(`${ok ? 'PASS' : 'FAIL'} ${width}×${height} ${route}: ${name}`);
+      }
+    }
+    frame.width=390; frame.height=844;
+    frame.contentWindow.location.hash='#/saved';
+    output.textContent=`${results.filter(r=>r.startsWith('PASS')).length}/${results.length} passed\n`+results.join('\n');
+  } catch (error) { output.textContent=String(error); }
+  finally { button.disabled=false; }
+};
+</script>
+</html>
