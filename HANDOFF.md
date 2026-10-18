@@ -21,3 +21,6 @@ World.tsx / world-data.ts add a bounded source-linked BBC World feed, regional v
 
 ## Profile / world revision
 Profile.tsx adds persisted profile fields and activity achievements, with backward-compatible validation in logic.ts. Settings are at #/settings; assistant is labeled AI. Rickroll.tsx is a green dot dance with pause and reduced-motion support. World uses bundled Natural Earth land paths. world-summary.ts / WorldReports.tsx / SummarySettings.tsx define a local-or-HTTPS summary API, bounded cached summaries, topic filters and 30 UTC-date visited snapshots. SUMMARY-API.md documents the backend contract and local-only history limits.
+
+## Mobile layout fix
+Header height now includes top safe-area padding instead of squeezing controls into the old fixed height. Short pages fill the dynamic viewport; bottom navigation uses left/right inset centering without a transform. Reading progress uses four grid tracks, 12px gaps and 44px touch targets. tests/mobile-layout.html checks 320/390/430px portrait and 667px landscape, long/short route transitions and simulated safe-area insets: 96 assertions passed in Chromium. Physical iPhone Safari browser chrome/keyboard behavior still needs verification after deployment.
