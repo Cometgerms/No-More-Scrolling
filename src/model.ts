@@ -38,7 +38,11 @@ export type Article = {
     | "timeline"
     | "evidence"
     | "voting"
-    | "agenda";
+    | "agenda"
+    | "cyclic"
+    | "sorting"
+    | "snow"
+    | "cooperation";
   labIntro: string;
   deep: Section;
   quiz: {

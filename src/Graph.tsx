@@ -1,6 +1,7 @@
 import { useLanguage, useContent } from "./i18n";
 import { SubjectIcon } from "./ProfileArt";
 import { EdgeEditor } from "./EdgeEditor";
+import { learnedGraph } from "./learned-graph";
 import { edgeKey, gestureView, zoomAt, type Point, type View } from "./graph-gesture";
 import { useRef, useState } from "react";
 import {
@@ -13,13 +14,6 @@ import {
   Link2,
 } from "lucide-react";
 import { SUBJECTS, type Edge, type State, type Subject } from "./model";
-const positions: Record<string, [number, number]> = {
-  measure: [100, 70], countable: [300, 70], voting: [485, 70],
-  cantor: [100, 235], diagonal: [300, 235], relation: [485, 235],
-  cache: [100, 400], halting: [300, 400],
-  modular: [100, 565], decidability: [300, 565], agenda: [485, 565],
-  bank: [100, 730], credit: [300, 730], causal: [485, 730],
-};
 export function Graph({
   state,
   update,
@@ -35,10 +29,7 @@ export function Graph({
 }) {
   const { t, language } = useLanguage();
   const content = useContent();
-  const articles = content.articles.filter(a => state.progress[a.id]?.complete);
-  const learned = new Set(articles.flatMap(a => a.concepts));
-  const concepts = content.concepts.filter(c => learned.has(c.id));
-  const edges = content.edges.filter(e => learned.has(e.from) && learned.has(e.to));
+  const { articles, concepts, edges: allEdges } = learnedGraph(content, state);
 
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState<Subject | "all">("all"),
@@ -67,9 +58,7 @@ export function Graph({
     requestAnimationFrame(() => edgeDetail.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
   const svg = useRef<SVGSVGElement>(null);
-  const position = (id: string): [number, number] => positions[id] ?? [100 + (concepts.findIndex(c => c.id === id) % 3) * 190, 150 + Math.floor(concepts.findIndex(c => c.id === id) / 3) * 150];
-  const allEdges = [...edges, ...state.edges.filter(e => learned.has(e.from) && learned.has(e.to))],
-    focus = concepts.find((c) => c.id === selected) ?? concepts[0];
+  const focus = concepts.find((c) => c.id === selected) ?? concepts[0];
   const near = new Set([
     focus?.id,
     ...allEdges
@@ -83,6 +72,11 @@ export function Graph({
       (c.name + " " + c.zh).toLowerCase().includes(query.toLowerCase()),
   );
   const visible = new Set(filtered.map((c) => c.id));
+  const graphHeight = Math.max(340, Math.ceil(filtered.length / 2) * 155 + 60);
+  const position = (id: string): [number, number] => {
+    const i = filtered.findIndex(c => c.id === id);
+    return [filtered.length === 1 ? 290 : 150 + (i % 2) * 280, 70 + Math.floor(i / 2) * 155];
+  };
   function choose(id: string) {
     setSelected(id);
     setSelectedEdge(null);
@@ -98,6 +92,7 @@ export function Graph({
         <span className="eyebrow">YOUR CONNECTED MIND</span>
         <h1>{language === "en" ? "Knowledge graph" : "知识图谱"}</h1>
         <p>{language === "en" ? "Concepts from your completed reads. Open a node or trace a connection." : "只展示已读完文章的概念，点击节点或连线继续探索。"}</p>
+        <p className="hint">{language === "en" ? `${articles.length} completed articles · ${concepts.length} unlocked concepts` : `已读完 ${articles.length} 篇 · 解锁 ${concepts.length} 个概念`}</p>
       </div>
       <div className="search">
         <Search size={18} />
@@ -134,7 +129,9 @@ export function Graph({
         </div>
         <svg
           ref={svg}
-          viewBox="0 0 580 900"
+          viewBox={`0 0 580 ${graphHeight}`}
+          style={{ height: "auto", maxHeight: 900, aspectRatio: `580 / ${graphHeight}` }}
+          preserveAspectRatio="xMidYMin meet"
           className="graph"
           role="group"
           aria-label={t("互动知识图谱")}
@@ -168,7 +165,7 @@ export function Graph({
               <circle cx="1" cy="1" r="1" fill="var(--muted)" opacity=".25" />
             </pattern>
           </defs>
-          <rect width="580" height="900" fill="url(#dots)" />
+          <rect width="580" height={graphHeight} fill="url(#dots)" />
           <g
             transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}
           >
@@ -247,7 +244,7 @@ export function Graph({
             className="icon-button"
             aria-label={t("放大图谱")}
             disabled={zoom >= 3}
-            onClick={() => setView(v => zoomAt(v, v.zoom + .25, {x:290,y:450}))}
+            onClick={() => setView(v => zoomAt(v, v.zoom + .25, {x:290,y:graphHeight/2}))}
           >
             <Plus size={17} />
           </button>
@@ -255,7 +252,7 @@ export function Graph({
             className="icon-button"
             aria-label={t("缩小图谱")}
             disabled={zoom <= 0.6}
-            onClick={() => setView(v => zoomAt(v, v.zoom - .25, {x:290,y:450}))}
+            onClick={() => setView(v => zoomAt(v, v.zoom - .25, {x:290,y:graphHeight/2}))}
           >
             <Minus size={17} />
           </button>

@@ -560,7 +560,7 @@ export default function App() {
                 <span className="eyebrow">FOLLOW THE CONNECTIONS</span>
                 <h3>{language === "en" ? "Knowledge graph" : "知识图谱"}</h3>
                 <p>
-                  {concepts.length} {t("个概念 ·")} {state.edges.length} {t("条个人关联")}</p>
+                  {learnedConcepts.length} {t("个概念 ·")} {state.edges.filter(e => learnedConcepts.some(c => c.id === e.from) && learnedConcepts.some(c => c.id === e.to)).length} {t("条个人关联")}</p>
               </div>
               <Link2 size={26} />
               <ArrowRight size={20} />

@@ -18,8 +18,8 @@ function renderEnglish(element: React.ReactNode) {
   return renderToStaticMarkup(React.createElement(LanguageProvider, { initialLanguage: "en", children: element }));
 }
 
-test("all eight English articles and the curated graph are complete and keep stable identifiers", () => {
-  assert.equal(english.articles.length, 8);
+test("all twelve English articles and the curated graph are complete and keep stable identifiers", () => {
+  assert.equal(english.articles.length, 12);
   assert.ok(!han.test(JSON.stringify(english)), "English content must not fall back to Chinese");
   assert.deepEqual(english.articles.map(a => a.id), articles.map(a => a.id));
   assert.deepEqual(english.concepts.map(c => c.id), concepts.map(c => c.id));

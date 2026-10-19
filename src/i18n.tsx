@@ -2,10 +2,11 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import contentEnglish from "./content.en.json";
 import interfaceEnglish from "./ui.en.json";
 import { articles, concepts, edges } from "./content";
+import { nextEnglish } from "./content-next";
 
 export type Language = "zh" | "en";
 const LANGUAGE_KEY = "nms-language-v1";
-const catalog: Record<string, string> = { ...contentEnglish, ...interfaceEnglish };
+const catalog: Record<string, string> = { ...contentEnglish, ...interfaceEnglish, ...nextEnglish };
 export type Translate = (value: string, ...parameters: (string | number)[]) => string;
 
 /** @requires Curated text, never user notes. @ensures Both languages keep identical identifiers and TeX. */

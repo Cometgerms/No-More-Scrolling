@@ -1,4 +1,5 @@
 import type { Article, Block, Concept, Edge, Section } from "./model";
+import { nextArticles, nextConcepts, nextEdges } from "./content-next";
 const t = (body: string): Block => ({ kind: "text", body });
 const m = (body: string): Block => ({ kind: "math", body });
 const f = (body: "measure" | "cantor" | "diagonal"): Block => ({ kind: "figure", body });
@@ -41,6 +42,7 @@ const meta = {
     "对照所列参考资料整理；数学推导逐步检查，交互有限案例由自动测试验证。未经外部专家审稿。",
 };
 export const concepts: Concept[] = [
+  ...nextConcepts,
   {
     id: "measure",
     name: "Measure",
@@ -152,6 +154,7 @@ export const concepts: Concept[] = [
   },
 ];
 export const edges: Edge[] = [
+  ...nextEdges,
   { from: "measure", to: "countable", label: "定义要求" },
   { from: "measure", to: "cantor", label: "零测度的不可数例子" },
   { from: "cantor", to: "diagonal", label: "不可数性可用此法证明" },
@@ -831,3 +834,4 @@ export const articles: Article[] = [
     sources: [voteSource],
   },
 ];
+articles.push(...nextArticles);

@@ -1,0 +1,38 @@
+# 内容编辑日志
+
+每次新增内容先读 [KNOWLEDGE_INDEX.md](KNOWLEDGE_INDEX.md)，避免重复主题、术语漂移和没有来源的延伸。索引列出全部文章、知识点、前置知识、模型、链接和核验记录；本文件保留编辑判断与后续方向。
+
+## 2026-10-18 · 第二批，四篇双语文章
+
+| 文章 ID | 核心主张 | 依据与核验范围 | 明确限制 |
+| --- | --- | --- | --- |
+| clockwork-groups | 模 n 加法是循环群；k 的阶为 n/gcd(n,k) | 用户提供的 Gallian, Contemporary Abstract Algebra, 8e，第 2 章印刷 pp.42–43、第 4 章 pp.77–80；PDF 页码比印刷页码大 20。核对群定义、循环群例子与元素阶，另写整除证明并用有限枚举检查 | 钟面是例子，不代表所有群；不得把加法结论套到全体余数的乘法上 |
+| sorting-information-limit | 确定性比较排序的最坏情况需要至少 ceil(log₂(n!)) 次比较 | MIT 6.006 Spring 2020 Lecture 5, p.2；核对二叉决策树与排序模型。交互 n≤10，自动测试覆盖 n≤12 | 输入互异；叶子数只是必要条件；不声称每个 n 都有恰达该高度的合法排序树，也不把下界套到 counting sort |
+| snow-beyond-the-map | Snow 的证据不仅是地图；行动前后变化不能独自识别因果 | UCLA 所收录 Snow 1855 原文 pp.38–55、55–98，以及 handle-removal 专页；对照移除日期、疫情已下降与供水比较 | 区分网页现代导言和原始著作；交互人数全部虚构，不能当历史观测；不将自然实验称为随机试验 |
+| states-and-the-future | 指定无限重复 PD 中 grim trigger 可在 δ≥1/2 支持合作 | MIT 17.810 2021 Repeated Games 的 discounting/Grim Trigger 部分；本文设定 3/5/1/0 收益，独立核对等比级数与阈值。IAEA 2007 官方说明仅支持保障监督的制度角色 | 完美监测、可信惩罚、共同且固定的收益、无限期限；并非现实国家效用估计或时事预测；始终背叛也可为均衡 |
+
+教材资源标识：`gallian-8e-user-copy`，原文件名 `Abstract-Algebra-Text_Gallian-e8.pdf`。文件保留在用户私人资料中，不复制、上传或随网站分发；应用来源链接只指向出版社入口，并明确标注不是全文。教材中的表达、习题与图没有直接搬运；文章和交互为重新撰写。
+
+网络资源的完整 URL 与用途均在自动索引和文章末尾。此次读取发生于 2026-10-18；这是访问与编辑日期，不是新闻事件日期。未做外部专家审稿。抽象模型与历史解释不能靠“有引用”保证绝对正确，后续修订须保留纠错记录。
+
+补充交叉核验：Yale ECON 159 Lecture 22 Chapter 1 明确使用“任意一方出现背叛后，双方永久进入惩罚”的策略，本文采用这一定义。MIT 17.810 pp.29–33 支持合作路径收益计算；其后对只按对方行为触发的不同策略所作的路径外讨论，不直接移植到本文。收益矩阵与策略定义必须一起登记，不能只复制一个阈值。
+
+## 第一批的继承记录
+
+八篇既有文章：zero-is-not-impossible、cantor-dust、machine-against-itself、tiny-cache-big-miss、borrowing-power、history-counterfactual、majority-without-winner、who-sets-the-agenda。来源、概念与原核验日期完整进入索引。本批未重新逐条审阅旧来源，保留原记录，不把旧文章的核验日期刷新为今天。
+
+## 后续生成与编辑规则
+
+1. 在索引中找到最近的概念和已讲过的例子，提出一条新问题与前置知识链；稳定 ID 不随标题变更。
+2. 优先教材、论文、原始档案或官方制度文件。逐条记录具体章节、页码或网页段落；来源只支持它实际讨论的主张。
+3. 数学/算法给清晰假设、边界案例和推导；历史分开事实、解释和反事实；政治分开模型、现实材料和预测。新闻性主张必须另查更新日期。
+4. 中英同义，公式保持一致；模型数据、示意图和真实观测必须区分。禁止虚构引文、页码、数据或已完成的核验。
+5. 在本日志追加变更原因与核验范围；运行索引生成器、测试与构建。对既有文章的纠正追加记录，不抹去历史。
+6. 公开发布前人工阅读新条目。API 可以协助起草，但不能绕过来源核验直接写入正式知识库。
+
+## 备选路线（尚未发布，不属于已核验内容）
+
+- 数学：subgroup → coset → Lagrange theorem → normal subgroup / quotient group。
+- 计算机：adversary argument → reductions → P/NP 与 NP-completeness；不要把“尚未知道算法”写成“不可能”。
+- 历史：继续 Snow 与 Whitehead 的协作，或转向 Hamilton 的财政制度；人物不应成为单因解释。
+- 政治：security dilemma、signaling、credible commitment、bargaining model of war；挑选具体双边案例后，另建有日期的事实来源表。

@@ -1,4 +1,5 @@
 import { useLanguage } from "./i18n";
+import { CyclicLab, SortingLab, SnowLab, CooperationLab } from "./NewLabs";
 import { useEffect, useState } from "react";
 import { Play, RotateCcw, ChevronRight, Pause } from "lucide-react";
 import {
@@ -545,6 +546,10 @@ export function Lab({ article }: { article: Article }) {
     evidence: <Evidence />,
     voting: <Voting />,
     agenda: <Agenda />,
+    cyclic: <CyclicLab />,
+    sorting: <SortingLab />,
+    snow: <SnowLab />,
+    cooperation: <CooperationLab />,
   }[article.lab];
   return (
     <section className="lab">
