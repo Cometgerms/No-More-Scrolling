@@ -60,6 +60,7 @@ export type Article = {
 export type Progress = {
   section: number;
   complete: boolean;
+  completedOn?: string;
   answer?: number;
   feedback?: Feedback;
 };

@@ -4,11 +4,8 @@ export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 export function dailySelection(date: string, state: State) {
-  if (
-    state.daily[date]?.length === 4 &&
-    state.daily[date].every((id) => articles.some((a) => a.id === id))
-  )
-    return state.daily[date];
+  const previousDate = Object.keys(state.daily).filter(d => d < date).sort().at(-1);
+  const previous = new Set(previousDate ? state.daily[previousDate] : []);
   const day = Math.floor(
     Date.UTC(
       ...(date
@@ -21,16 +18,23 @@ export function dailySelection(date: string, state: State) {
     .toLowerCase()
     .split(/[,，;；\s]+/)
     .filter((x) => x.length > 2);
-  return (["math", "cs", "history", "politics"] as Subject[]).map(
+  return (["math", "cs", "history", "politics"] as Subject[]).flatMap(
     (subject, index) => {
       const pool = articles.filter((a) => a.subject === subject);
+      const cached = state.daily[date]?.find(id => pool.some(a => a.id === id));
+      // Keep today's completion visible without filling its slot with an endless next article.
+      if (cached && state.progress[cached]?.complete && state.progress[cached].completedOn === date) return [cached];
+      const unread = pool.filter(a => !state.progress[a.id]?.complete);
+      if (!unread.length) return [];
+      const fresh = unread.filter(a => !previous.has(a.id));
+      const eligible = new Set((fresh.length ? fresh : unread).map(a => a.id));
+      if (cached && eligible.has(cached)) return [cached];
       return pool
         .map((a, i) => ({
           a,
           score:
             ((day + index) % pool.length === i ? 3 : 0) +
             (a.difficulty === state.difficulty ? 0.5 : 0) +
-            (state.progress[a.id]?.complete ? -1 : 0) +
             (state.progress[a.id]?.feedback === "skip" ? -5 : 0) +
             (terms.some((term) =>
               (
@@ -50,6 +54,7 @@ export function dailySelection(date: string, state: State) {
               ? 0.5
               : 0),
         }))
+        .filter(({ a }) => eligible.has(a.id))
         .sort((a, b) => b.score - a.score)[0].a.id;
     },
   );
@@ -179,6 +184,8 @@ export function validateState(raw: unknown): State {
             ),
           ),
           complete: v.complete === true,
+          ...(v.complete === true && typeof v.completedOn === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.completedOn)
+            ? { completedOn: v.completedOn } : {}),
           ...(Number.isInteger(v.answer) &&
           Number(v.answer) >= 0 &&
           Number(v.answer) < a.quiz.options.length
@@ -196,12 +203,12 @@ export function validateState(raw: unknown): State {
       if (
         /^\d{4}-\d{2}-\d{2}$/.test(date) &&
         Array.isArray(v) &&
-        v.length === 4 &&
+        v.length <= 4 &&
         v.every(
           (x) => typeof x === "string" && articles.some((a) => a.id === x),
         ) &&
         new Set(v.map((id) => articles.find((a) => a.id === id)!.subject))
-          .size === 4
+          .size === v.length
       )
         out.daily[date] = v;
   if (isRecord(r.seconds))

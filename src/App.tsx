@@ -313,12 +313,13 @@ export default function App() {
   }, [ready, tracking, reader, tab]);
   useEffect(() => {
     if (!ready) return;
-    setState((s) =>
-      s.daily[today]
+    setState((s) => {
+      const picks = dailySelection(today, s);
+      return s.daily[today]?.length === picks.length && picks.every((id, index) => s.daily[today]?.[index] === id)
         ? s
-        : { ...s, daily: { ...s.daily, [today]: dailySelection(today, s) } },
-    );
-  }, [ready, today]);
+        : { ...s, daily: { ...s.daily, [today]: picks } };
+    });
+  }, [ready, today, state.daily, state.progress]);
   useEffect(() => {
     const on = () => setOffline(false),
       off = () => setOffline(true),
@@ -392,7 +393,7 @@ export default function App() {
   }
   const learnedConcepts = concepts.filter(c => articles.some(a => state.progress[a.id]?.complete && a.concepts.includes(c.id)));
   const graphConcept = learnedConcepts.find(c => c.id === selected) ?? learnedConcepts[0];
-  const ids = state.daily[today] ?? dailySelection(today, state),
+  const ids = dailySelection(today, state),
     daily = ids
       .map((id) => articles.find((a) => a.id === id)!)
       .filter(Boolean)
@@ -536,9 +537,9 @@ export default function App() {
               </button>
             </div>
             <div className="section-heading">
-              <h2>{t("今日四选")}<span>DAILY PICKS</span>
+              <h2>{language === "en" ? "Today's picks" : "今日精选"}<span>DAILY PICKS</span>
               </h2>
-              <span className="count">{done} / 4</span>
+              <span className="count">{ids.length ? `${done} / ${ids.length}` : (language === "en" ? "All caught up" : "全部读完")}</span>
             </div>
             <div className="discovery-grid">
               {daily.map((a, i) => (
@@ -551,6 +552,9 @@ export default function App() {
                 />
               ))}
             </div>
+            {Object.entries(SUBJECTS).filter(([subject]) => !daily.some(a => a.subject === subject)).map(([subject, info]) => (
+              <p className="hint" key={subject}>{t(info.name)} · {language === "en" ? "All articles completed. Waiting for new content." : "本学科已读完，等待新内容。"}</p>
+            ))}
             <p className="hint">{language === "en" ? "End of today’s picks." : "今日推荐已结束。"}</p>
             <button
               className="graph-teaser"
@@ -1069,7 +1073,7 @@ function Reader({
                 ...s,
                 progress: {
                   ...s.progress,
-                  [a.id]: { ...progress, complete: true },
+                  [a.id]: { ...progress, complete: true, ...(!progress.complete ? { completedOn: localDate() } : {}) },
                 },
               }));
               navigate("today");

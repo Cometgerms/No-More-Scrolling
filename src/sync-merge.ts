@@ -41,6 +41,13 @@ export function mergeStates(base: State, local: State, remote: State) {
     const value = choose(b, l, r);
     // The current chapter is a navigation choice; returning to an earlier one is intentional.
     if (value) state.progress[id] = l && r ? { ...value, section: b ? choose(b.section, l.section, r.section) : l.section, complete: l.complete || r.complete } : value;
+    if (state.progress[id]?.complete) {
+      const completed = [l, r].filter(p => p?.complete);
+      // An undated legacy completion must remain read, not become newly finished on another device.
+      const dates = completed.map(p => p?.completedOn);
+      if (dates.length && dates.every((d): d is string => !!d)) state.progress[id].completedOn = dates.sort()[0];
+      else delete state.progress[id].completedOn;
+    }
   }
   state.seconds = {};
   for (const id of keys(local.seconds, remote.seconds)) state.seconds[id] = Math.max(local.seconds[id] ?? 0, remote.seconds[id] ?? 0);
