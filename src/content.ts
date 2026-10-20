@@ -1,5 +1,6 @@
 import type { Article, Block, Concept, Edge, Section } from "./model";
 import { nextArticles, nextConcepts, nextEdges } from "./content-next";
+import { algebraArticles, algebraConcepts, algebraEdges } from "./content-algebra";
 const t = (body: string): Block => ({ kind: "text", body });
 const m = (body: string): Block => ({ kind: "math", body });
 const f = (body: "measure" | "cantor" | "diagonal"): Block => ({ kind: "figure", body });
@@ -43,6 +44,7 @@ const meta = {
 };
 export const concepts: Concept[] = [
   ...nextConcepts,
+  ...algebraConcepts,
   {
     id: "measure",
     name: "Measure",
@@ -155,6 +157,7 @@ export const concepts: Concept[] = [
 ];
 export const edges: Edge[] = [
   ...nextEdges,
+  ...algebraEdges,
   { from: "measure", to: "countable", label: "定义要求" },
   { from: "measure", to: "cantor", label: "零测度的不可数例子" },
   { from: "cantor", to: "diagonal", label: "不可数性可用此法证明" },
@@ -835,3 +838,4 @@ export const articles: Article[] = [
   },
 ];
 articles.push(...nextArticles);
+articles.push(...algebraArticles);

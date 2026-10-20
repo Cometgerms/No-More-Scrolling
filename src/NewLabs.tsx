@@ -1,7 +1,22 @@
 import { useState } from "react";
 import { useLanguage } from "./i18n";
 import { MathText } from "./Math";
-import { additiveOrbit, cooperationValues, sortingBound } from "./learning-models";
+import { additiveOrbit, cooperationValues, sortingBound, subgroupWitness, cyclicCosets } from "./learning-models";
+
+export function SubgroupLab() {
+  const { language }=useLanguage(), en=language==="en";
+  const [chosen,setChosen]=useState([0,2,4,6]), witness=subgroupWitness(chosen);
+  return <><div className="residue-picker">{Array.from({length:8},(_,i)=><button key={i} className="chip" aria-pressed={chosen.includes(i)} onClick={()=>setChosen(chosen.includes(i)?chosen.filter(x=>x!==i):[...chosen,i].sort((a,b)=>a-b))}>{i}</button>)}</div>
+    <MathText value={`H=\\{${chosen.join(",")}\\}`}/>
+    <div role="status">{!chosen.length ? (en?"The empty set is not a subgroup: no identity.":"空集不是子群：它没有单位元。") : witness ? <><MathText value={String.raw`${witness.a}-${witness.b}\equiv${witness.result}\pmod8,\quad ${witness.result}\notin H`}/><p>{en?"One counterexample is enough to reject the subset.":"一个反例就足以否定这个子集。"}</p></> : <p>It’s MyGROUP!!!!! <span>{en?"Nonempty and closed under subtraction: subgroup confirmed.":"非空且对减法封闭：子群判别通过。"}</span></p>}</div>
+  </>;
+}
+export function CosetLab() {
+  const {language}=useLanguage(), en=language==="en", [k,setK]=useState(4), {subgroup,cosets}=cyclicCosets(12,k);
+  return <><label className="lab-control">k = {k}<input type="range" min="0" max="11" value={k} aria-label={en?"Subgroup generator":"子群生成元"} onChange={e=>setK(+e.target.value)}/></label>
+    <div className="coset-rows">{cosets.map((row,i)=><div key={i}><strong>{row[0]} + H</strong><span>{row.map(x=><span key={x} className="coset-residue">{x}</span>)}</span></div>)}</div>
+    <MathText value={String.raw`12=${cosets.length}\times${subgroup.length},\quad [G:H]=${cosets.length}`}/><p className="hint">{en?"Each residue appears once. Equal size is shown by numbers, not color alone.":"每个余数恰好出现一次；每行相同数量的元素对应一个陪集。"}</p></>;
+}
 
 export function CyclicLab() {
   const { language } = useLanguage(), en = language === "en";

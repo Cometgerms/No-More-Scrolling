@@ -10,7 +10,7 @@ import "katex/dist/katex.min.css";
 function Preview() {
   const { articles } = useContent(), { language, setLanguage } = useLanguage();
   const [index,setIndex]=useState(0), [light,setLight]=useState(false), [graph,setGraph]=useState(false), [selected,setSelected]=useState("group");
-  const batch=articles.slice(-4), article=batch[index];
+  const batch=articles.filter(a=>["clockwork-groups","sorting-information-limit","snow-beyond-the-map","states-and-the-future","subgroup-test","cosets-and-lagrange"].includes(a.id)), article=batch[index];
   useEffect(()=>{document.documentElement.dataset.theme=light?"light":"dark";},[light]);
   return <div style={{"--subject":SUBJECTS[article.subject].color,background:"var(--bg)",color:"var(--text)",minHeight:"100vh",padding:16} as React.CSSProperties}>
     <div style={{maxWidth:390,margin:"auto"}}><p className="hint">测试预览 · 不写入阅读记录 / Isolated preview</p>

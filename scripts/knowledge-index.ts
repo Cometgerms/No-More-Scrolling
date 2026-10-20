@@ -1,5 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { articles, concepts, edges } from "../src/content";
+import { ALGEBRA_EXERCISES } from "../src/AlgebraExercise";
+import { TOPICS } from "../src/topics";
 
 const lines = [
   "# 知识与资源索引", "",
@@ -20,4 +22,5 @@ for (const a of articles) {
     "参考资料：", "", ...a.sources.map(s => `- [${s.title}](${s.url}) — ${s.note}`), "");
 }
 lines.push("## 编辑关联", "", ...edges.map(e => `- ${e.from} → ${e.to}：${e.label}`), "");
+lines.push("## 专题学习路径", "", ...TOPICS.map(t=>`- ${t.zh}：${t.lessons.join(" → ")}`), "", "## 教材练习记录", "", ...Object.entries(ALGEBRA_EXERCISES).map(([id,e])=>`- ${id} · ${e.citation} — ${e.zh}`), "");
 writeFileSync(new URL("../KNOWLEDGE_INDEX.md", import.meta.url), lines.join("\n"));

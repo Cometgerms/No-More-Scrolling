@@ -1,7 +1,7 @@
 import { BookOpen, Clock, Flame, Music2, Network, Feather, Bookmark, Sigma, Command, Landmark, Globe2 } from "lucide-react";
 import type { Subject } from "./model";
 export function BadgeIcon({ kind, size = 24 }: { kind: string; size?: number }) {
-  const icons = { book: BookOpen, clock: Clock, flame: Flame, music: Music2, network: Network, pen: Feather, bookmark: Bookmark };
+  const icons = { book: BookOpen, clock: Clock, flame: Flame, music: Music2, network: Network, pen: Feather, bookmark: Bookmark, algebra: Sigma };
   const Icon = icons[kind as keyof typeof icons] ?? Flame;
   return <Icon size={size} strokeWidth={1.7} aria-hidden="true" />;
 }

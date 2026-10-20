@@ -2,7 +2,7 @@
 
 由 `node --import tsx scripts/knowledge-index.ts` 从内容库生成；不要手动修改。编辑过程和证据限制见 [CONTENT_LOG.md](CONTENT_LOG.md)。
 
-当前收录 12 篇文章、21 个概念、18 条编辑关联。
+当前收录 14 篇文章、24 个概念、22 条编辑关联。
 
 这里的核验日期是内容库的编辑记录，不等于独立专家审稿。链接不构成转载授权；不得把用户提供的整本教材发布到仓库。
 
@@ -10,13 +10,16 @@
 
 | ID | 概念 | 学科 | 定义与边界 | 对应文章 |
 | --- | --- | --- | --- | --- |
-| group | Group / 群 | math | 集合配合封闭的二元运算，满足结合律、单位元和逆元条件；交换律不是必要条件。 | clockwork-groups |
-| cyclic | Cyclic group / 循环群 | math | 所有元素都由一个生成元的整数次幂（加法记号下为整数倍）得到的群。 | clockwork-groups |
+| group | Group / 群 | math | 集合配合封闭的二元运算，满足结合律、单位元和逆元条件；交换律不是必要条件。 | clockwork-groups, subgroup-test |
+| cyclic | Cyclic group / 循环群 | math | 所有元素都由一个生成元的整数次幂（加法记号下为整数倍）得到的群。 | clockwork-groups, subgroup-test |
 | decision-tree | Decision tree / 决策树 | cs | 把算法根据比较结果作出的分支展开成树；叶子表示可区分的输出情况。 | sorting-information-limit |
 | lower-bound | Lower bound / 复杂度下界 | cs | 在规定计算模型中，对所有正确算法都成立的资源需求限制。 | sorting-information-limit |
 | natural-experiment | Natural experiment / 自然实验 | history | 利用研究者未主动随机分配的暴露差异作比较；可比性仍需要论证。 | snow-beyond-the-map |
 | repeated-game | Repeated game / 重复博弈 | politics | 同一阶段博弈多次发生，策略可以依赖历史；未来收益可能改变今天的激励。 | states-and-the-future |
 | verification | Verification / 核查机制 | politics | 通过制度化的信息收集与检查评估履约；不等于拥有无误的监测或自动执行惩罚。 | states-and-the-future |
+| subgroup | Subgroup / 子群 | math | 在原群的同一运算下，自身也构成群的子集。非空性和对 ab⁻¹ 的封闭性给出判别法。 | subgroup-test, cosets-and-lagrange |
+| coset | Coset / 陪集 | math | 子群 H 被群元素平移所得的集合 aH；左陪集划分群，且与 H 等势。 | cosets-and-lagrange |
+| lagrange | Lagrange theorem / 拉格朗日定理 | math | 有限群中子群的阶整除群的阶；陪集数量等于两者之比。 | cosets-and-lagrange |
 | measure | Measure / 测度 | math | 在 σ-algebra 上定义的非负、可数可加的集合函数。它把长度与概率放进同一个框架。 | zero-is-not-impossible, cantor-dust |
 | countable | Countable additivity / 可数可加性 | math | 可数个两两不交的可测集合，其并的测度等于测度之和；条件中的“可数”不能删去。 | zero-is-not-impossible |
 | cantor | Cantor set / 康托集 | math | 标准三分 Cantor set 是不可数的闭集，Lebesgue measure 为零。 | zero-is-not-impossible, cantor-dust |
@@ -281,6 +284,46 @@
 - [MIT 17.810 · Repeated Games (2021)](https://ocw.mit.edu/courses/17-810-game-theory-spring-2021/mit17_810s21_lec5.pdf) — Discounting 与 Grim Trigger Strategy；本文用自设收益演算。
 - [IAEA · Nuclear Safeguards: Staying Ahead of the Game (2007)](https://www.iaea.org/newscenter/news/nuclear-safeguards-staying-ahead-game) — 保障监督在核不扩散体系中的制度角色；不用于证明任何当日履约状态。
 
+### subgroup-test
+
+**挑出几个元素，就能得到一个群吗？** · math · theorem
+
+- 核心问题：Z₈ 中的 {0,2,4,6} 与 {0,1,2}，为什么只有前者是子群？
+- 前置知识：Group；Cyclic group
+- 概念：group, cyclic, subgroup
+- 交互：subgroup；点击选择 Z₈ 的元素。程序检查非空性，并寻找 a−b 不在集合里的反例。这里的运算始终是模 8 加法。
+- 首发：2026-10-19；记录中的核验日期：2026-10-19
+- 核验说明：对照 Gallian 第八版指定章节核对定义与证明；有限交互例子经自动测试。未经外部专家审稿。
+
+- 01 · 子集不自动继承结构：群是集合与运算的组合。子群要求沿用原来的运算：在模 8 加法中，两个偶数的和仍是偶数，0 在集合里，每个偶数的加法逆元也在。但 {0,1,2} 中的 1+2=3 已经跑出了集合。
+- 02 · One-step subgroup test：对群 G 的非空子集 H，只需证明任意 a,b∈H 都有 ab⁻¹∈H。加法记号下就是 a−b∈H。非空这个前提不能省掉：空集会让“任意两个元素”的条件空真，但它没有单位元。
+- 03 · 为什么一次检查够用？：取 x∈H。令 a=b=x，得到单位元 e∈H；再令 a=e，得到每个 b 的逆元。最后对 a 与 b⁻¹ 应用条件，得到 ab∈H。结合律直接从 G 继承。因此这不是省略证明，而是把各条公理从同一条件推出来。
+- 04 · 生成子群总能过关：所有 a 的整数次幂组成的集合非空，而 aⁱ(aʲ)⁻¹=aⁱ⁻ʲ 仍在其中，所以它是子群。注意指数包括负整数与 0。有限可视化能帮助发现反例；任意群的一般结论仍由上面的证明支撑。
+
+参考资料：
+
+- [Gallian · Contemporary Abstract Algebra, 8e · Chapter 3](https://www.cengage.com/) — 用户教材印刷 pp.61–62、65（PDF pp.81–82、85），Subgroup 与 Theorems 3.1、3.4。链接是出版社入口。
+
+### cosets-and-lagrange
+
+**为什么子群大小必须整除整个群？** · math · theorem
+
+- 核心问题：12 个元素的群，能有 5 个元素的子群吗？
+- 前置知识：Subgroup
+- 概念：subgroup, coset, lagrange
+- 交互：cosets；固定 G=Z₁₂，改变生成元 k。每行是 ⟨k⟩ 的一个不同陪集。观察每行一样长，并且 0 到 11 恰好各出现一次。
+- 首发：2026-10-19；记录中的核验日期：2026-10-19
+- 核验说明：对照 Gallian 第八版指定章节核对定义与证明；有限交互例子经自动测试。未经外部专家审稿。
+
+- 01 · 平移一个子群：在 Z₁₂ 中取 H={0,4,8}。给每个元素加 1，得到 1+H={1,5,9}；加 2 得 {2,6,10}。这种平移叫 coset。一般乘法记号写作 aH={ah:h∈H}，这里讨论左陪集。
+- 02 · 代表元不是唯一的：给 H 加 4 又回到 H，所以不同代表元可能表示同一个陪集。若 aH 与 bH 相交，设 ah₁=bh₂，则 a=bh₂h₁⁻¹。由于 H 对乘法和逆元封闭，aH⊆bH；交换 a,b 得到相反包含，因此两者相等。
+- 03 · 每一块为什么一样大？：映射 h↦ah 是 H 到 aH 的双射：它满射来自陪集定义；若 ah₁=ah₂，左乘 a⁻¹ 得到 h₁=h₂，所以也单射。每个 g 都属于 gH，因为 e∈H。于是陪集覆盖 G，互不重叠，而且与 H 等大。
+- 04 · Lagrange theorem：当 G 有限时，设不同左陪集的数量为 [G:H]，就得到 |G|=[G:H]|H|。因此子群的阶必须整除群的阶：12 阶群不可能有 5 阶子群。对元素生成的子群应用定理，也得到元素的阶整除群的阶。
+
+参考资料：
+
+- [Gallian · Contemporary Abstract Algebra, 8e · Chapter 7](https://www.cengage.com/) — 用户教材印刷 pp.144–148（PDF pp.164–168）：coset 定义、陪集性质和 Theorem 7.1。链接是出版社入口。
+
 ## 编辑关联
 
 - group → cyclic：由单个元素生成的特例
@@ -290,6 +333,10 @@
 - natural-experiment → causal：需要比较组可比性的论证
 - repeated-game → verification：历史策略依赖可观察的行动
 - repeated-game → credit：未来承诺改变当下激励；是类比而非等同
+- group → subgroup：保留原运算的内部结构
+- cyclic → subgroup：单个元素生成一个子群
+- subgroup → coset：平移后构成陪集
+- coset → lagrange：等大分块给出整除关系
 - measure → countable：定义要求
 - measure → cantor：零测度的不可数例子
 - cantor → diagonal：不可数性可用此法证明
@@ -301,3 +348,16 @@
 - voting → relation：多数关系可能失去
 - voting → agenda：循环带来顺序效应
 - credit → agenda：均涉及制度规则与激励
+
+## 专题学习路径
+
+- 抽象代数 · AA：clockwork-groups → subgroup-test → cosets-and-lagrange
+- 计算机 · 理论与算法：machine-against-itself → tiny-cache-big-miss → sorting-information-limit
+- 历史 · 人物与证据：borrowing-power → history-counterfactual → snow-beyond-the-map
+- 政治 · 制度与国家博弈：majority-without-winner → who-sets-the-agenda → states-and-the-future
+
+## 教材练习记录
+
+- clockwork-groups · Gallian 8e · Ch. 3, Ex. 1 (Z₁₂ part) · p. 68 / PDF 88 — 求加法群 Z₁₂ 的阶与每个元素的阶。先算 8，再把同一方法用到其余元素；注意群的阶与元素的阶是两个概念。
+- subgroup-test · Gallian 8e · Ch. 3, Ex. 13 · p. 69 / PDF 89 — H 是群 G 的非空子集，对群运算封闭，并满足：若 a 不在 H，则 a⁻¹ 也不在 H。H 一定是子群吗？先别被“不在”绕晕，试着从一个 x∈H 出发。
+- cosets-and-lagrange · Gallian 8e · Ch. 7, Ex. 3 · p. 156 / PDF 176 — 在整数加法群 Z 中，H=3Z={…,−6,−3,0,3,6,…}。写出所有不同的左陪集。把整数看作无穷长的键盘：每隔三个键分到同一轨。

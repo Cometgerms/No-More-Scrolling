@@ -17,3 +17,15 @@ export function cooperationValues(delta: number) {
   if (!Number.isFinite(delta) || delta < 0 || delta >= 1) throw new RangeError("Invalid discount");
   return { cooperate: 3 / (1 - delta), defect: 5 + delta / (1 - delta) };
 }
+
+export function subgroupWitness(elements: number[], n = 8) {
+  if (!Number.isInteger(n) || n < 2 || n > 24 || elements.some(x => !Number.isInteger(x) || x < 0 || x >= n)) throw new RangeError("Invalid residues");
+  const set = new Set(elements);
+  for (const a of set) for (const b of set) { const result = (a - b + n) % n; if (!set.has(result)) return { a, b, result }; }
+  return null;
+}
+export function cyclicCosets(n: number, k: number) {
+  const subgroup = additiveOrbit(n, k), seen = new Set<number>(), cosets: number[][] = [];
+  for (let a = 0; a < n; a++) if (!seen.has(a)) { const row = subgroup.map(h => (a+h)%n).sort((x,y)=>x-y); row.forEach(x=>seen.add(x)); cosets.push(row); }
+  return { subgroup, cosets };
+}

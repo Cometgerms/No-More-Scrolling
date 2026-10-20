@@ -43,6 +43,9 @@ import { SubjectIcon } from "./ProfileArt";
 import { Profile } from "./Profile";
 import { Rickroll } from "./Rickroll";
 import { World } from "./World";
+import { Topics } from "./TopicPage";
+import { TOPICS, topicForArticle } from "./topics";
+import { AlgebraExercise } from "./AlgebraExercise";
 import { Assistant, AssistantProvider, AssistantSettings } from "./Assistant";
 const navItems = [
   { id: "today", label: "今日", en: "Today", icon: Grid2X2 },
@@ -240,7 +243,8 @@ export default function App() {
   const lastActive = useRef(Date.now()),
     fileInput = useRef<HTMLInputElement>(null);
   const reader = path.startsWith("read/"),
-    article = reader ? articles.find((a) => a.id === path.slice(5)) : undefined;
+    article = reader ? articles.find((a) => a.id === path.slice(5).split("?")[0]) : undefined;
+  const readingTopic = article ? topicForArticle(new URLSearchParams(path.split("?")[1] ?? "").get("topic"), article.id) : undefined;
   const tab = reader ? "today" : path;
   const update = useCallback((fn: (s: State) => State) => setState(fn), []);
   const notify = (msg: string) => setToast(msg);
@@ -346,7 +350,7 @@ export default function App() {
         : [...s.saved, id],
     }));
   };
-  const open = (id: string) => {
+  const open = (id: string, topic?: string) => {
     setState((s) =>
       s.progress[id]
         ? s
@@ -355,7 +359,7 @@ export default function App() {
             progress: { ...s.progress, [id]: { section: 0, complete: false } },
           },
     );
-    navigate("read/" + id);
+    navigate("read/" + id + (topicForArticle(topic ?? null,id) ? `?topic=${topic}` : ""));
   };
   const focusConcept = (id: string) => {
     setSelected(id);
@@ -478,12 +482,15 @@ export default function App() {
             toggleSave={toggleSave}
             concept={focusConcept}
             open={open}
+            topic={readingTopic}
           />
         ) : reader ? (
           <div className="empty">
             <h1>{t("这篇文章不存在")}</h1>
             <button className="primary" onClick={() => navigate("today")}>{t("回到今日")}</button>
           </div>
+        ) : tab === "topics" || tab.startsWith("topics/") ? (
+          <Topics state={state} selected={tab.split("/")[1]} navigate={navigate} open={open}/>
         ) : tab === "today" ? (
           <>
             <section className="welcome">
@@ -536,6 +543,7 @@ export default function App() {
                 {tracking ? <Pause size={16} /> : <Play size={16} />}
               </button>
             </div>
+            <button className="topic-entry" onClick={() => navigate("topics")}><span><strong>{language === "en" ? "Topic mode" : "专题模式"}</strong><small>{language === "en" ? "Four subjects · Start Abstract Algebra" : "四个学科专题 · 从 Abstract Algebra 开始"}</small></span><ArrowRight size={21}/></button>
             <div className="section-heading">
               <h2>{language === "en" ? "Today's picks" : "今日精选"}<span>DAILY PICKS</span>
               </h2>
@@ -807,8 +815,8 @@ export default function App() {
         {navItems.map(({ id, label, en, icon: Icon }) => (
           <button
             key={id}
-            aria-current={tab === id || (tab === "settings" && id === "you") ? "page" : undefined}
-            className={tab === id || (tab === "settings" && id === "you") ? "active" : ""}
+            aria-current={tab === id || (tab.startsWith("topics") && id === "today") || (tab === "settings" && id === "you") ? "page" : undefined}
+            className={tab === id || (tab.startsWith("topics") && id === "today") || (tab === "settings" && id === "you") ? "active" : ""}
             onClick={() => navigate(id)}
           >
             <Icon size={21} />
@@ -827,20 +835,22 @@ export default function App() {
     </div></AssistantProvider>
   );
 }
-function Reader({
+export function Reader({
   article: a,
   state,
   update,
   toggleSave,
   concept,
   open,
+  topic,
 }: {
   article: Article;
   state: State;
   update: (fn: (s: State) => State) => void;
   toggleSave: (id: string) => void;
   concept: (id: string) => void;
-  open: (id: string) => void;
+  open: (id: string, topic?: string) => void;
+  topic?: typeof TOPICS[number];
 }) {
   const { t, language } = useLanguage();
   const { articles, concepts } = useContent();
@@ -849,6 +859,7 @@ function Reader({
   const section = progress.section,
     last = section === a.sections.length - 1;
   const sub = SUBJECTS[a.subject];
+  const topicNext = topic?.lessons.slice(topic.lessons.indexOf(a.id)+1).find(id => !state.progress[id]?.complete);
   const move = (index: number) => {
     update((s) => ({
       ...s,
@@ -868,8 +879,8 @@ function Reader({
       style={{ "--subject": sub.color } as React.CSSProperties}
     >
       <div className="reader-toolbar">
-        <button className="text-button" onClick={() => navigate("today")}>
-          <ArrowLeft size={17} />{t("返回探索")}</button>
+        <button className="text-button" onClick={() => navigate(topic ? `topics/${topic.id}` : "today")}>
+          <ArrowLeft size={17} />{topic ? (language === "en" ? "Back to topic" : "返回专题") : t("返回探索")}</button>
         <button
           className={`icon-button ${state.saved.includes(a.id) ? "selected" : ""}`}
           aria-label={state.saved.includes(a.id) ? t("取消收藏文章") : t("收藏文章")}
@@ -893,6 +904,7 @@ function Reader({
         ))}
       </div>
       <div className="reader-heading">
+        {topic && <p className="topic-reader-label">{language === "en" ? topic.en : topic.zh} · {topic.lessons.indexOf(a.id)+1} / {topic.lessons.length}</p>}
         <span className="subject-label">
           <i><SubjectIcon subject={a.subject} /></i>
           {sub.en}{" "}
@@ -923,6 +935,7 @@ function Reader({
       {section === 2 && <Lab key={a.id} article={a} />}</div>
       {last && (
         <>
+          <AlgebraExercise articleId={a.id}/>
           <button
             className="deep-toggle"
             aria-expanded={deep}
@@ -1076,10 +1089,11 @@ function Reader({
                   [a.id]: { ...progress, complete: true, ...(!progress.complete ? { completedOn: localDate() } : {}) },
                 },
               }));
-              navigate("today");
+              if (topicNext && topic) open(topicNext,topic.id);
+              else navigate(topic ? `topics/${topic.id}` : "today");
             }}
           >
-            {progress.complete
+            {topic ? (topicNext ? (language === "en" ? "Finish & continue to next lesson" : "完成并进入下一讲") : (language === "en" ? "Finish & return to topic" : "完成并返回专题")) : progress.complete
               ? t("回到今日探索")
               : progress.answer === undefined
                 ? t("结束探索 · 暂时跳过题目")
@@ -1099,6 +1113,8 @@ function Reader({
         {!last ? (
           <button className="primary" onClick={() => move(section + 1)}>{t("继续故事")}<ArrowRight size={17} />
           </button>
+        ) : topic ? (
+          <button className="secondary" onClick={() => navigate(`topics/${topic.id}`)}>{language === "en" ? "Topic outline" : "专题目录"}<ArrowRight size={17}/></button>
         ) : (
           <button
             className="secondary"

@@ -1,0 +1,45 @@
+import type { Article, Block, Concept, Edge, Section } from "./model";
+export const algebraEnglish: Record<string,string> = {};
+const b=(zh:string,en:string)=>{algebraEnglish[zh]=en;return zh;};
+const t=(zh:string,en:string):Block=>({kind:"text",body:b(zh,en)});
+const m=(body:string):Block=>({kind:"math",body});
+const s=(zh:string,en:string,...blocks:Block[]):Section=>({title:b(zh,en),blocks});
+const meta={publishedAt:"2026-10-19",verifiedAt:"2026-10-19",verification:b("对照 Gallian 第八版指定章节核对定义与证明；有限交互例子经自动测试。未经外部专家审稿。","Definitions and proofs checked against the specified chapters of Gallian, eighth edition; finite interactive examples tested. Not externally peer reviewed.")};
+export const algebraConcepts:Concept[]=[
+  {id:"subgroup",subject:"math",name:"Subgroup",zh:b("子群","Subgroup"),description:b("在原群的同一运算下，自身也构成群的子集。非空性和对 ab⁻¹ 的封闭性给出判别法。","A subset that forms a group under the same operation. Nonemptiness and closure under ab⁻¹ give a subgroup test.")},
+  {id:"coset",subject:"math",name:"Coset",zh:b("陪集","Coset"),description:b("子群 H 被群元素平移所得的集合 aH；左陪集划分群，且与 H 等势。","A translate aH of a subgroup H. Left cosets partition the group and have the same cardinality as H.")},
+  {id:"lagrange",subject:"math",name:"Lagrange theorem",zh:b("拉格朗日定理","Lagrange theorem"),description:b("有限群中子群的阶整除群的阶；陪集数量等于两者之比。","In a finite group, the subgroup order divides the group order; their ratio counts the cosets.")},
+];
+export const algebraEdges:Edge[]=[
+  {from:"group",to:"subgroup",label:b("保留原运算的内部结构","Internal structure with the original operation")},
+  {from:"cyclic",to:"subgroup",label:b("单个元素生成一个子群","One element generates a subgroup")},
+  {from:"subgroup",to:"coset",label:b("平移后构成陪集","Translation produces a coset")},
+  {from:"coset",to:"lagrange",label:b("等大分块给出整除关系","Equal-sized blocks yield divisibility")},
+];
+export const algebraArticles:Article[]=[
+  {...meta,id:"subgroup-test",subject:"math",contentType:"theorem",difficulty:2,minutes:7,
+    title:b("挑出几个元素，就能得到一个群吗？","Does a handful of elements make a group?"),subtitle:b("Subgroup test：把四个检查压缩成一个。","The subgroup test: compress the checks into one."),question:b("Z₈ 中的 {0,2,4,6} 与 {0,1,2}，为什么只有前者是子群？","Why is {0,2,4,6} a subgroup of Z₈ while {0,1,2} is not?"),
+    prerequisites:["Group","Cyclic group"],concepts:["group","cyclic","subgroup"],lab:"subgroup",
+    labIntro:b("点击选择 Z₈ 的元素。程序检查非空性，并寻找 a−b 不在集合里的反例。这里的运算始终是模 8 加法。","Select elements of Z₈. Check nonemptiness and find a witness where a−b leaves the set. The operation is addition modulo 8 throughout."),
+    sections:[
+      s("01 · 子集不自动继承结构","01 · A subset need not inherit the structure",t("群是集合与运算的组合。子群要求沿用原来的运算：在模 8 加法中，两个偶数的和仍是偶数，0 在集合里，每个偶数的加法逆元也在。但 {0,1,2} 中的 1+2=3 已经跑出了集合。","A group combines a set with an operation. A subgroup keeps that operation: even residues are closed under addition modulo 8, contain 0 and contain their additive inverses. In {0,1,2}, however, 1+2=3 leaves the set."),m(String.raw`H=\{0,2,4,6\}\le\mathbb Z_8`)),
+      s("02 · One-step subgroup test","02 · One-step subgroup test",t("对群 G 的非空子集 H，只需证明任意 a,b∈H 都有 ab⁻¹∈H。加法记号下就是 a−b∈H。非空这个前提不能省掉：空集会让“任意两个元素”的条件空真，但它没有单位元。","For a nonempty subset H of a group G, it suffices that ab⁻¹ belongs to H for every a,b in H. In additive notation use a−b. Nonemptiness matters: the empty set satisfies the pairwise condition vacuously but has no identity."),m(String.raw`H\ne\varnothing,\quad\forall a,b\in H:\ ab^{-1}\in H\quad\Longrightarrow\quad H\le G`)),
+      s("03 · 为什么一次检查够用？","03 · Why does one check suffice?",t("取 x∈H。令 a=b=x，得到单位元 e∈H；再令 a=e，得到每个 b 的逆元。最后对 a 与 b⁻¹ 应用条件，得到 ab∈H。结合律直接从 G 继承。因此这不是省略证明，而是把各条公理从同一条件推出来。","Choose x in H. Taking a=b=x yields the identity e. Then a=e yields each inverse. Applying the condition to a and b⁻¹ gives ab in H. Associativity is inherited from G. The test derives the necessary properties rather than ignoring them."),m(String.raw`xx^{-1}=e,\quad eb^{-1}=b^{-1},\quad a(b^{-1})^{-1}=ab`)),
+      s("04 · 生成子群总能过关","04 · Generated subgroups pass the test",t("所有 a 的整数次幂组成的集合非空，而 aⁱ(aʲ)⁻¹=aⁱ⁻ʲ 仍在其中，所以它是子群。注意指数包括负整数与 0。有限可视化能帮助发现反例；任意群的一般结论仍由上面的证明支撑。","The integer powers of a form a nonempty set, and aⁱ(aʲ)⁻¹=aⁱ⁻ʲ remains in it, proving it is a subgroup. Include negative exponents and 0. Finite visualizations can expose counterexamples; the general statement rests on the proof."),m(String.raw`\langle a\rangle=\{a^k:k\in\mathbb Z\}\le G`)),
+    ],deep:s("深入 · 运算必须相同","Deeper · The operation must agree",t("Z₈ 不是整数加法群 Z 的子群：7+1 在 Z 中等于 8，在 Z₈ 中等于 0。把符号写得像子集，不会让两个不同运算变成同一个。下一讲会用子群把一个有限群分成等大的块。","Z₈ is not a subgroup of the integers under addition: 7+1 is 8 in Z but 0 in Z₈. Similar-looking elements do not identify different operations. Next, a subgroup will partition a finite group into equal-sized blocks.")),
+    quiz:{question:b("H 非空且对 a−b 封闭，怎样得到 0∈H？","If H is nonempty and closed under a−b, how do we obtain 0 in H?"),options:[b("取任意 a∈H，计算 a−a","Choose any a in H and compute a−a"),b("假定所有子集都有 0","Assume every subset contains 0"),b("只检查元素个数为偶数","Only check that the size is even")],answer:0,explanations:[b("正确；这正是非空性发挥作用的地方。","Correct: this is where nonemptiness is used."),b("例如 {1} 就不含 0。","For example, {1} does not contain 0."),b("大小不能替代对运算的检查。","Size does not replace checking the operation.")]},
+    sources:[{title:"Gallian · Contemporary Abstract Algebra, 8e · Chapter 3",url:"https://www.cengage.com/",note:b("用户教材印刷 pp.61–62、65（PDF pp.81–82、85），Subgroup 与 Theorems 3.1、3.4。链接是出版社入口。","User textbook, printed pp.61–62,65 (PDF pp.81–82,85): subgroups and Theorems 3.1,3.4. Link is the publisher homepage.")}],
+  },
+  {...meta,id:"cosets-and-lagrange",subject:"math",contentType:"theorem",difficulty:3,minutes:7,
+    title:b("为什么子群大小必须整除整个群？","Why must a subgroup’s size divide the group’s size?"),subtitle:b("Cosets 把结构问题变成等大分块。","Cosets turn structure into equal-sized blocks."),question:b("12 个元素的群，能有 5 个元素的子群吗？","Can a group with 12 elements have a subgroup with 5 elements?"),prerequisites:["Subgroup"],concepts:["subgroup","coset","lagrange"],lab:"cosets",
+    labIntro:b("固定 G=Z₁₂，改变生成元 k。每行是 ⟨k⟩ 的一个不同陪集。观察每行一样长，并且 0 到 11 恰好各出现一次。","Fix G=Z₁₂ and change k. Each row is a distinct coset of ⟨k⟩. Rows have equal size and every residue from 0 to 11 occurs exactly once."),
+    sections:[
+      s("01 · 平移一个子群","01 · Translate a subgroup",t("在 Z₁₂ 中取 H={0,4,8}。给每个元素加 1，得到 1+H={1,5,9}；加 2 得 {2,6,10}。这种平移叫 coset。一般乘法记号写作 aH={ah:h∈H}，这里讨论左陪集。","In Z₁₂ take H={0,4,8}. Adding 1 gives 1+H={1,5,9}; adding 2 gives {2,6,10}. Such translates are cosets. In multiplicative notation, aH={ah:h in H} is a left coset."),m(String.raw`aH=\{ah:h\in H\}`)),
+      s("02 · 代表元不是唯一的","02 · Representatives are not unique",t("给 H 加 4 又回到 H，所以不同代表元可能表示同一个陪集。若 aH 与 bH 相交，设 ah₁=bh₂，则 a=bh₂h₁⁻¹。由于 H 对乘法和逆元封闭，aH⊆bH；交换 a,b 得到相反包含，因此两者相等。","Adding 4 to H returns H, so distinct representatives can name the same coset. If ah₁=bh₂ lies in both aH and bH, then a=bh₂h₁⁻¹. Closure and inverses in H imply aH⊆bH. Reversing the argument gives equality."),m(String.raw`aH\cap bH\ne\varnothing\quad\Longrightarrow\quad aH=bH`)),
+      s("03 · 每一块为什么一样大？","03 · Why are the blocks equal-sized?",t("映射 h↦ah 是 H 到 aH 的双射：它满射来自陪集定义；若 ah₁=ah₂，左乘 a⁻¹ 得到 h₁=h₂，所以也单射。每个 g 都属于 gH，因为 e∈H。于是陪集覆盖 G，互不重叠，而且与 H 等大。","The map h↦ah is a bijection from H to aH. It is onto by definition and one-to-one by left cancellation. Every g lies in gH because e is in H. Cosets therefore cover G, are disjoint and have the same size as H."),m(String.raw`h\mapsto ah,\qquad ah_1=ah_2\Rightarrow h_1=h_2`)),
+      s("04 · Lagrange theorem","04 · Lagrange theorem",t("当 G 有限时，设不同左陪集的数量为 [G:H]，就得到 |G|=[G:H]|H|。因此子群的阶必须整除群的阶：12 阶群不可能有 5 阶子群。对元素生成的子群应用定理，也得到元素的阶整除群的阶。","For finite G, let [G:H] count the distinct left cosets. Then |G|=[G:H]|H|, so |H| divides |G|: a group of order 12 cannot have a subgroup of order 5. Applying this to a generated subgroup shows that each element’s order divides the group order."),m(String.raw`|G|=[G:H]\,|H|,\qquad |H|\mid|G|`)),
+    ],deep:s("深入 · 别倒着使用定理","Deeper · Do not reverse the theorem",t("这个证明给出必要条件，并没有证明每个约数都对应一个子群。也不要把陪集自动当成子群：1+{0,4,8} 不含单位元 0。至于能否对陪集定义良好的群运算，需要后续的 normal subgroup 与 quotient group 概念。","The proof gives a necessary condition; it does not establish a subgroup for every divisor. Nor is a coset automatically a subgroup: 1+{0,4,8} lacks the identity 0. A well-defined group operation on cosets leads to normal subgroups and quotient groups, beyond this introduction.")),
+    quiz:{question:b("Z₁₂ 中 H={0,4,8} 有多少个不同陪集？","How many distinct cosets does H={0,4,8} have in Z₁₂?"),options:["3","4","12"],answer:1,explanations:[b("3 是每个陪集的大小。","3 is the size of each coset."),b("正确：12/3=4。","Correct: 12/3=4."),b("12 个代表元不意味着 12 个不同陪集。","Twelve representatives do not mean twelve distinct cosets.")]},
+    sources:[{title:"Gallian · Contemporary Abstract Algebra, 8e · Chapter 7",url:"https://www.cengage.com/",note:b("用户教材印刷 pp.144–148（PDF pp.164–168）：coset 定义、陪集性质和 Theorem 7.1。链接是出版社入口。","User textbook, printed pp.144–148 (PDF pp.164–168): cosets, their properties and Theorem 7.1. Link is the publisher homepage.")}],
+  },
+];

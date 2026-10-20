@@ -42,7 +42,9 @@ export type Article = {
     | "cyclic"
     | "sorting"
     | "snow"
-    | "cooperation";
+    | "cooperation"
+    | "subgroup"
+    | "cosets";
   labIntro: string;
   deep: Section;
   quiz: {
